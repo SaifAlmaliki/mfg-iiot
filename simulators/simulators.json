@@ -634,8 +634,8 @@
         "productUri": "urn:industrial-simulator:opcua:product",
         "allowAnonymous": true,
         "dynamicUpdateIntervalMs": 5000,
-        "robotId": "Robot2",
-        "machineId": "Machine2"
+        "robotId": "Robot1",
+        "machineId": "Machine1"
       },
       "status": "running"
     },

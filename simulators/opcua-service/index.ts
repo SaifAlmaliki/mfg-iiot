@@ -286,8 +286,6 @@ class OpcuaSimulatorService {
     }
 
     try {
-      console.log('[OPC UA] Initializing server...');
-
       // Create OPC UA server (do not pass nodeset_filename: [] or address space stays null)
       this.server = new OPCUAServer({
         port: this.config.port,
@@ -312,7 +310,6 @@ class OpcuaSimulatorService {
 
       // Initialize server (loads default OPC UA nodeset so rootFolder exists)
       await this.server.initialize();
-      console.log('[OPC UA] Server initialized');
 
       // Build address space
       this.buildAddressSpace();
@@ -321,14 +318,9 @@ class OpcuaSimulatorService {
       await this.server.start();
       this.isRunning = true;
       this.metrics.startTime = new Date();
-      console.log(`[OPC UA] Server started on port ${this.config.port}`);
-      console.log(`[OPC UA] Endpoint URL: opc.tcp://localhost:${this.config.port}`);
-      console.log(`[OPC UA] Server URI: ${this.config.serverUri}`);
-      console.log(`[OPC UA] Anonymous access: ${this.config.allowAnonymous ? 'enabled' : 'disabled'}`);
 
       // Resolve dynamic update interval from config file if present
       this.resolveDynamicUpdateInterval();
-      console.log(`[OPC UA] Dynamic value update interval: ${this.dynamicUpdateIntervalMs} ms`);
 
       // Start dynamic value updates
       this.startValueUpdates();
@@ -382,7 +374,6 @@ class OpcuaSimulatorService {
       // Register namespace
       const nsIndex = addressSpace.registerNamespace(nsConfig.uri);
       this.namespaceMap.set(nsConfig.uri, nsIndex);
-      console.log(`[OPC UA] Registered namespace: ${nsConfig.name} (${nsConfig.uri})`);
 
       // Create root object for this namespace
       const rootFolder = namespace.addObject({
@@ -454,21 +445,17 @@ class OpcuaSimulatorService {
       }
     }
 
-    console.log(`[OPC UA] Address space built with ${this.dynamicNodes.size} dynamic nodes (${this.robotId}, ${this.machineId})`);
   }
 
   private setupEventHandlers(): void {
     if (!this.server) return;
 
-    // Track sessions
     this.server.on('session_activated', (session: ISessionBase) => {
       this.metrics.connections++;
-      console.log(`[OPC UA] Session activated: ${session.sessionName || 'anonymous'}`);
     });
 
     this.server.on('session_closed', (session: ISessionBase) => {
       this.metrics.disconnections++;
-      console.log(`[OPC UA] Session closed: ${session.sessionName || 'anonymous'}`);
     });
   }
 
@@ -619,8 +606,7 @@ async function main(): Promise<void> {
     const service = new OpcuaSimulatorService({ port });
     await service.start();
     services.push(service);
-    console.log('[OPC UA] Service is ready (single server)');
-    console.log(`[OPC UA] Endpoint URL: opc.tcp://localhost:${port}`);
+    console.log(`[OPC UA] Ready on opc.tcp://localhost:${port}`);
   } else {
     for (const entry of entries) {
       const port = Number(entry.port) || 4840;
@@ -637,7 +623,7 @@ async function main(): Promise<void> {
       });
       await service.start();
       services.push(service);
-      console.log(`[OPC UA] Started ${entry.name || entry.id || port} on port ${port}`);
+      console.log(`[OPC UA] ${entry.name || entry.id || port}: opc.tcp://localhost:${port}`);
     }
     console.log(`[OPC UA] All ${services.length} OPC UA server(s) are ready`);
   }
