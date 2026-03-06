@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "bun --hot run index.ts",
-    "start": "bun run index.ts"
+    "start": "bun run index.ts",
+    "start:dev": "bun run index.ts"
   },
   "dependencies": {
     "node-opcua": "^2.145.0"
