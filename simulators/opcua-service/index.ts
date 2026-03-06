@@ -489,7 +489,7 @@ class OpcuaSimulatorService {
         // Update backing config so getter returns correct value on read
         nodeConfig.value = nodeConfig.dataType === DataType.Int32 ? Math.round(roundedValue) : roundedValue;
         node.setValueFromSource(new Variant({
-          dataType: node.dataType,
+          dataType: nodeConfig.dataType,
           value: nodeConfig.value,
         }));
       } catch (error) {

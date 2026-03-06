@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Cpu, Loader2, Copy, AlertCircle } from 'lucide-react';
+import { Cpu, Loader2, Copy, AlertCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -79,28 +79,43 @@ function statusBadgeClassName(status: string): string {
 export function SimulatorsPanel() {
   const [simulators, setSimulators] = useState<SimulatorEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const fetchSimulators = (withLive = true) => {
+    const url = withLive ? '/api/simulators?live=true' : '/api/simulators';
+    return fetch(url)
+      .then((res) => {
+        if (!res.ok) throw new Error(res.statusText || 'Failed to load');
+        return res.json();
+      })
+      .then((data) => setSimulators(Array.isArray(data) ? data : []));
+  };
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    fetch('/api/simulators')
-      .then((res) => {
-        if (!res.ok) throw new Error(res.statusText || 'Failed to load');
-        return res.json();
-      })
-      .then((data) => {
-        if (!cancelled) setSimulators(Array.isArray(data) ? data : []);
-      })
-      .catch((e) => {
-        if (!cancelled) setError(e.message || 'Failed to load simulators');
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+    fetchSimulators(true)
+      .catch((e) => { if (!cancelled) setError(e.message || 'Failed to load simulators'); })
+      .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => {
+    if (simulators.length === 0) return;
+    const interval = setInterval(() => {
+      fetchSimulators(true).catch(() => {});
+    }, 20000);
+    return () => clearInterval(interval);
+  }, [simulators.length]);
+
+  const handleRefreshStatus = () => {
+    setRefreshing(true);
+    fetchSimulators(true)
+      .catch((e) => toast.error(e.message || 'Failed to refresh'))
+      .finally(() => setRefreshing(false));
+  };
 
   return (
     <div className="p-4 md:p-6 min-h-full bg-slate-950">
@@ -113,6 +128,18 @@ export function SimulatorsPanel() {
           <CardDescription className="text-slate-300 text-base leading-relaxed mt-1">
             Status and connection details for Modbus, OPC UA, and Energy Meter simulators. Use <span className="text-slate-200">Local</span> when running on this machine; use <span className="text-slate-200">Docker</span> when services run in containers.
           </CardDescription>
+          <div className="mt-3 flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100"
+              onClick={handleRefreshStatus}
+              disabled={loading || refreshing}
+            >
+              {refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              <span className="ml-2">Refresh status</span>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="pt-6">
           {loading && (
@@ -159,7 +186,7 @@ export function SimulatorsPanel() {
                     <TableCell className="text-slate-200 align-top tabular-nums">{sim.port}</TableCell>
                     <TableCell className="align-top">
                       <Badge variant="outline" className={cn('border', statusBadgeClassName(sim.status))}>
-                        {sim.status}
+                        {sim.status === 'running' ? 'Running' : sim.status === 'stopped' ? 'Stopped' : sim.status}
                       </Badge>
                     </TableCell>
                     <TableCell className="align-top">

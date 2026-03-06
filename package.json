@@ -8,10 +8,14 @@
   },
   "workspaces": [
     "packages/*",
-    "services/*"
+    "services/*",
+    "simulators/*"
   ],
   "scripts": {
-    "dev": "concurrently -n next,modbus,opcua,energymeter \"next dev -p 3002\" \"npm run --prefix simulators/modbus-service start:dev\" \"npm run --prefix simulators/opcua-service start:dev\" \"npm run --prefix simulators/energy-meter-service start:dev\"",
+    "dev": "next dev -p 3002",
+    "opc": "npm run --prefix simulators/opcua-service start:dev",
+    "modbus": "npm run --prefix simulators/modbus-service start:dev",
+    "energz": "npm run --prefix simulators/energy-meter-service start:dev",
     "build": "next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/",
     "start": "NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
     "lint": "eslint .",

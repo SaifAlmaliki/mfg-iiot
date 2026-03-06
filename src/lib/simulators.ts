@@ -4,6 +4,7 @@
  */
 
 import path from 'path';
+import net from 'net';
 
 export interface SimulatorEntry {
   id: string;
@@ -94,4 +95,59 @@ export function normalizeSimulatorEntry(
       endpointDocker: `${scheme}://${dockerService}:${port}`,
     },
   };
+}
+
+const LIVENESS_TIMEOUT_MS = 1500;
+
+/**
+ * Check if a host:port is reachable via TCP (e.g. simulator listening).
+ * Uses a short timeout to avoid blocking the list response.
+ */
+export function checkSimulatorReachable(
+  host: string,
+  port: number,
+  timeoutMs: number = LIVENESS_TIMEOUT_MS
+): Promise<boolean> {
+  return new Promise((resolve) => {
+    const socket = new net.Socket();
+    const onError = () => {
+      socket.destroy();
+      resolve(false);
+    };
+    socket.setTimeout(timeoutMs, onError);
+    socket.once('error', onError);
+    socket.connect(port, host, () => {
+      socket.destroy();
+      resolve(true);
+    });
+  });
+}
+
+/**
+ * Parse "host:port" into { host, port }. Falls back to localhost if invalid.
+ */
+function parseConnectionLocal(connectionLocal: string): { host: string; port: number } {
+  const match = connectionLocal.match(/^(.+):(\d+)$/);
+  if (match) {
+    return { host: match[1].trim(), port: parseInt(match[2], 10) };
+  }
+  return { host: 'localhost', port: 0 };
+}
+
+/**
+ * Run liveness checks for each simulator in parallel and return entries with status 'running' | 'stopped'.
+ */
+export async function checkSimulatorsLiveness(
+  entries: SimulatorEntry[],
+  timeoutMs: number = LIVENESS_TIMEOUT_MS
+): Promise<SimulatorEntry[]> {
+  const results = await Promise.all(
+    entries.map(async (entry) => {
+      const { host, port } = parseConnectionLocal(entry.connection.local);
+      if (!port) return { ...entry, status: 'stopped' as const };
+      const reachable = await checkSimulatorReachable(host, port, timeoutMs);
+      return { ...entry, status: reachable ? ('running' as const) : ('stopped' as const) };
+    })
+  );
+  return results;
 }
