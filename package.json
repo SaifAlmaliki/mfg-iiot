@@ -11,7 +11,9 @@
     "services/*"
   ],
   "scripts": {
-    "dev": "next dev -p 3002",
+    "dev": "concurrently -n next,simulators \"npm run dev:next\" \"npm run dev:simulators\"",
+    "dev:next": "next dev -p 3002",
+    "dev:simulators": "node scripts/run-simulators.mjs",
     "build": "next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/",
     "start": "NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
     "lint": "eslint .",
@@ -103,6 +105,7 @@
     "zustand": "^5.0.6"
   },
   "devDependencies": {
+    "concurrently": "^9.1.2",
     "prisma": "^7.4.2",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^25.3.3",

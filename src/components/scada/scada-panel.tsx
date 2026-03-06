@@ -52,6 +52,7 @@ import {
   Legend,
 } from 'recharts';
 import { useRealtimeStore, useRealtimeConnection, useAlarms } from '@/hooks/use-realtime';
+import { useNavigationStore } from '@/lib/store';
 import { usePermission } from '@/lib/hooks/use-auth';
 import { HmiGraphicsList } from './hmi-graphics-list';
 import { HmiGraphicRuntime } from './hmi-graphic-runtime';
@@ -67,7 +68,17 @@ const generateTrendData = (baseValue: number, variance: number, points: number =
 
 type HmiViewMode = 'list' | 'runtime' | 'editor';
 
-export function ScadaPanel() {
+type ScadaTab = 'tags' | 'alarms' | 'trends' | 'hmi';
+
+function tabFromModule(currentModule: string): ScadaTab {
+  if (currentModule === 'scada-tags') return 'tags';
+  if (currentModule === 'scada-alarms') return 'alarms';
+  if (currentModule === 'scada-trends') return 'trends';
+  if (currentModule === 'scada-hmi') return 'hmi';
+  return 'tags';
+}
+
+export function ScadaPanel({ currentModule: currentModuleProp = 'scada' }: { currentModule?: string }) {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [setpointValue, setSetpointValue] = useState<string>('');
   const [setpointDialogOpen, setSetpointDialogOpen] = useState(false);
@@ -75,11 +86,19 @@ export function ScadaPanel() {
   const [hmiViewMode, setHmiViewMode] = useState<HmiViewMode>('list');
   const [selectedGraphicId, setSelectedGraphicId] = useState<string | null>(null);
 
+  const { setCurrentModule } = useNavigationStore();
   const canEditScada = usePermission('scada.edit');
   const tags = useRealtimeStore((state) => state.tags);
   const alarms = useAlarms(false);
   const { writeTag, ackAlarm } = useRealtimeConnection();
   const connected = useRealtimeStore((state) => state.connected);
+
+  const activeTab = tabFromModule(currentModuleProp);
+  const setActiveTab = (value: string) => {
+    const tab = value as ScadaTab;
+    setCurrentModule('scada-' + tab);
+    window.history.replaceState(null, '', `/#scada/${tab}`);
+  };
 
   // Detect mobile screen size
   useEffect(() => {
@@ -126,7 +145,7 @@ export function ScadaPanel() {
       </div>
 
       {/* Main Content */}
-      <Tabs defaultValue="tags" className="space-y-3 md:space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 md:space-y-4">
         <ScrollArea className="w-full">
           <TabsList className="w-full sm:w-auto flex gap-1">
             <TabsTrigger value="tags" className="text-xs md:text-sm px-3 md:px-4">Live Tags</TabsTrigger>
@@ -323,9 +342,15 @@ export function ScadaPanel() {
         {/* Trends Tab */}
         <TabsContent value="trends" className="space-y-3 md:space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
-            {['TIC-101', 'PIC-101', 'FIC-101', 'LIC-101'].map((tagId) => {
+            {[
+              { tagId: 'TIC-101', fallbackBase: 65 },
+              { tagId: 'PIC-101', fallbackBase: 3.5 },
+              { tagId: 'FIC-101', fallbackBase: 250 },
+              { tagId: 'LIC-101', fallbackBase: 75 },
+            ].map(({ tagId, fallbackBase }) => {
               const tag = tags.get(tagId);
-              if (!tag) return null;
+              const baseValue = tag ? tag.value : fallbackBase;
+              const isDemo = !tag;
 
               return (
                 <Card key={tagId}>
@@ -334,12 +359,17 @@ export function ScadaPanel() {
                       <TrendingUp className="w-4 h-4 md:w-5 md:h-5" />
                       {tagId} Trend
                     </CardTitle>
-                    <CardDescription className="text-xs md:text-sm">Last 50 minutes</CardDescription>
+                    <CardDescription className="text-xs md:text-sm">
+                      Last 50 minutes
+                      {isDemo && (
+                        <span className="ml-2 text-muted-foreground">(Demo data — no live tag)</span>
+                      )}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="p-3 md:p-6 pt-0">
                     <div className="h-[150px] md:h-[200px]">
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={generateTrendData(tag.value, 5)}>
+                        <LineChart data={generateTrendData(baseValue, 5)}>
                           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                           <XAxis dataKey="time" className="text-[10px] md:text-xs" />
                           <YAxis className="text-[10px] md:text-xs" />

@@ -1,0 +1,22 @@
+# OPC UA Simulator - build from repo root: docker build -f docker/Dockerfile.opcua .
+# Uses Bun for consistency with modbus and energymeter (same pattern, easy maintenance).
+FROM oven/bun:1 AS base
+WORKDIR /app
+
+FROM base AS deps
+COPY simulators/opcua-service/package.json ./
+RUN bun install --production
+
+FROM base AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY simulators/opcua-service/index.ts ./
+RUN mkdir -p /app/config
+
+EXPOSE 4840 4850
+ENV OPCUA_PORT=4840
+ENV CONFIG_PATH=/app/config/simulators.json
+
+CMD ["bun", "run", "index.ts"]

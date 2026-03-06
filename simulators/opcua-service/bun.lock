@@ -3,9 +3,9 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "opcua-simulator",
+      "name": "opcua-service",
       "dependencies": {
-        "node-opcua": "^2.130.0",
+        "node-opcua": "^2.145.0",
       },
     },
   },

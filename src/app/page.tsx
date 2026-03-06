@@ -11,10 +11,31 @@ import { MesPanel } from '@/components/mes/mes-panel';
 import { TraceabilityPanel } from '@/components/traceability/traceability-panel';
 import { MonitoringPanel } from '@/components/monitoring/monitoring-panel';
 import { EdgePanel } from '@/components/edge/edge-panel';
+import { SimulatorsPanel } from '@/components/simulators/simulators-panel';
 import { AdminPanel } from '@/components/admin/admin-panel';
 import { useNavigationStore } from '@/lib/store';
 import { useAuthStore } from '@/lib/auth-store';
 import { Toaster } from '@/components/ui/sonner';
+
+function getModuleFromHash(): string {
+  if (typeof window === 'undefined') return 'dashboard';
+  const hash = window.location.hash.slice(1).toLowerCase();
+  if (hash === 'scada' || hash === 'scada/') return 'scada';
+  if (hash === 'scada/tags') return 'scada-tags';
+  if (hash === 'scada/alarms') return 'scada-alarms';
+  if (hash === 'scada/trends') return 'scada-trends';
+  if (hash === 'scada/hmi') return 'scada-hmi';
+  if (hash.startsWith('scada')) return 'scada';
+  if (hash === 'hierarchy') return 'hierarchy';
+  if (hash.startsWith('mes')) return hash === 'mes' ? 'mes' : hash;
+  if (hash.startsWith('traceability')) return hash === 'traceability' ? 'traceability' : hash;
+  if (hash.startsWith('monitoring')) return hash === 'monitoring' ? 'monitoring' : hash;
+  if (hash === 'edge') return 'edge';
+  if (hash === 'simulators') return 'simulators';
+  if (hash.startsWith('admin')) return hash === 'admin' ? 'admin' : hash;
+  if (hash === 'dashboard' || hash === '') return 'dashboard';
+  return 'dashboard';
+}
 
 export default function Home() {
   const pathname = usePathname();
@@ -22,6 +43,15 @@ export default function Home() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const currentModule = useNavigationStore((state) => state.currentModule);
+  const setCurrentModule = useNavigationStore((state) => state.setCurrentModule);
+
+  // Sync currentModule from URL hash on load and when hash changes
+  useEffect(() => {
+    const apply = () => setCurrentModule(getModuleFromHash());
+    apply();
+    window.addEventListener('hashchange', apply);
+    return () => window.removeEventListener('hashchange', apply);
+  }, [setCurrentModule]);
 
   useEffect(() => {
     refreshSession();
@@ -54,7 +84,7 @@ export default function Home() {
       return <HierarchyPanel />;
     }
     if (currentModule.startsWith('scada')) {
-      return <ScadaPanel />;
+      return <ScadaPanel currentModule={currentModule} />;
     }
     if (currentModule.startsWith('mes')) {
       return <MesPanel />;
@@ -67,6 +97,9 @@ export default function Home() {
     }
     if (currentModule === 'edge') {
       return <EdgePanel />;
+    }
+    if (currentModule === 'simulators') {
+      return <SimulatorsPanel />;
     }
     if (currentModule.startsWith('admin')) {
       return <AdminPanel />;

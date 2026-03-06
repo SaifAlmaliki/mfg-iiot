@@ -1,0 +1,21 @@
+# Modbus TCP Simulator - build from repo root: docker build -f docker/Dockerfile.modbus .
+FROM oven/bun:1 AS base
+WORKDIR /app
+
+FROM base AS deps
+COPY simulators/modbus-service/package.json ./
+RUN bun install --production
+
+FROM base AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY simulators/modbus-service/index.ts ./
+RUN mkdir -p /app/config
+
+EXPOSE 5020 5030 5040
+ENV MODBUS_PORT=5020
+ENV CONFIG_PATH=/app/config/simulators.json
+
+CMD ["bun", "run", "index.ts"]

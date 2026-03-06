@@ -20,6 +20,8 @@ import {
   LogOut,
   Building2,
   Layers,
+  LayoutGrid,
+  Cpu,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -59,6 +61,7 @@ const navigation: NavItem[] = [
       { id: 'scada-tags', label: 'Live Tags', icon: Activity, href: '/#scada/tags' },
       { id: 'scada-alarms', label: 'Alarms', icon: Bell, href: '/#scada/alarms' },
       { id: 'scada-trends', label: 'Trends', icon: Factory, href: '/#scada/trends' },
+      { id: 'scada-hmi', label: 'HMI View', icon: LayoutGrid, href: '/#scada/hmi' },
     ],
   },
   {
@@ -98,6 +101,12 @@ const navigation: NavItem[] = [
     label: 'Edge Connectors',
     icon: HardDrive,
     href: '/#edge',
+  },
+  {
+    id: 'simulators',
+    label: 'Simulators',
+    icon: Cpu,
+    href: '/#simulators',
   },
   {
     id: 'admin',

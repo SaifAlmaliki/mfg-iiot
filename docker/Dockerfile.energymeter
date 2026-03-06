@@ -1,0 +1,21 @@
+# Energy Meter Simulator - build from repo root: docker build -f docker/Dockerfile.energymeter .
+FROM oven/bun:1 AS base
+WORKDIR /app
+
+FROM base AS deps
+COPY simulators/energy-meter-service/package.json ./
+RUN bun install --production
+
+FROM base AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY simulators/energy-meter-service/index.ts ./
+RUN mkdir -p /app/config
+
+EXPOSE 5010 5011 5012
+ENV ENERGY_METER_PORT=5010
+ENV CONFIG_PATH=/app/config/simulators.json
+
+CMD ["bun", "run", "index.ts"]

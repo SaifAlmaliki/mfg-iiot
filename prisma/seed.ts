@@ -1098,6 +1098,60 @@ async function seedHmiSymbols() {
   console.log(`   ✓ Created ${PREDEFINED_SYMBOLS.length} predefined symbols (binding: data-binding="value", data-binding="fill")`);
 }
 
+async function seedHmiGraphics() {
+  console.log('🖼️ Seeding HMI graphics (default)...');
+  const existing = await prisma.hmiGraphic.findFirst({ where: { name: 'Process Overview' } });
+  if (existing) {
+    console.log('   ✓ Process Overview already exists');
+    return;
+  }
+  const user = await prisma.user.findFirst();
+  if (!user) {
+    console.log('   ⚠ Skipping HMI graphic: no user found');
+    return;
+  }
+  const tagRows = await prisma.tag.findMany({ take: 4, select: { id: true } });
+  const tagIds = tagRows.map((t) => t.id);
+  if (tagIds.length === 0) {
+    console.log('   ⚠ Skipping HMI graphic: no tags found');
+    return;
+  }
+  const symbols = await prisma.hmiSymbol.findMany({
+    where: { isPredefined: true },
+    take: 4,
+    select: { id: true },
+    orderBy: { name: 'asc' },
+  });
+  if (symbols.length === 0) {
+    console.log('   ⚠ Skipping HMI graphic: no symbols found');
+    return;
+  }
+  const graphic = await prisma.hmiGraphic.create({
+    data: {
+      name: 'Process Overview',
+      description: 'Default process graphic',
+      width: 800,
+      height: 600,
+      createdById: user.id,
+      elements: {
+        create: symbols.map((sym, i) => ({
+          symbolId: sym.id,
+          x: 80 + i * 180,
+          y: 120,
+          width: 100,
+          height: 100,
+          rotation: 0,
+          zIndex: i,
+          props: {
+            bindings: [{ tagId: tagIds[i % tagIds.length], property: 'value' }],
+          },
+        })),
+      },
+    },
+  });
+  console.log(`   ✓ Created HMI graphic "${graphic.name}" with ${symbols.length} elements`);
+}
+
 async function seedSystemConfig() {
   console.log('⚙️ Seeding System Configuration...');
   
@@ -1168,8 +1222,9 @@ async function main() {
     await seedMaintenanceLogs(equipment);
     await seedOEERecords(workCenters);
 
-    // HMI graphics (predefined symbols)
+    // HMI graphics (predefined symbols + default graphic)
     await seedHmiSymbols();
+    await seedHmiGraphics();
 
     // System
     await seedSystemConfig();

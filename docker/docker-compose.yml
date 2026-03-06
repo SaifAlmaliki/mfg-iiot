@@ -216,6 +216,54 @@ services:
       - uns-network
 
   # ===========================================
+  # SIMULATORS (Modbus, OPC UA, Energy Meter)
+  # Run from repo root: docker compose -f docker/docker-compose.yml up -d
+  # ===========================================
+  modbus-simulator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.modbus
+    container_name: uns-modbus-simulator
+    restart: unless-stopped
+    volumes:
+      - ../simulators/simulators.json:/app/config/simulators.json:ro
+    ports:
+      - "5020:5020"
+      - "5030:5030"
+      - "5040:5040"
+    networks:
+      - uns-network
+
+  opcua-simulator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.opcua
+    container_name: uns-opcua-simulator
+    restart: unless-stopped
+    volumes:
+      - ../simulators/simulators.json:/app/config/simulators.json:ro
+    ports:
+      - "4840:4840"
+      - "4850:4850"
+    networks:
+      - uns-network
+
+  energymeter-simulator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.energymeter
+    container_name: uns-energymeter-simulator
+    restart: unless-stopped
+    volumes:
+      - ../simulators/simulators.json:/app/config/simulators.json:ro
+    ports:
+      - "5010:5010"
+      - "5011:5011"
+      - "5012:5012"
+    networks:
+      - uns-network
+
+  # ===========================================
   # ADMIN TOOLS (Optional)
   # ===========================================
   
