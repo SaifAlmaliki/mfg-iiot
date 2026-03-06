@@ -1,0 +1,1070 @@
+// Unified Namespace (UNS) Platform - PostgreSQL Database Model
+// Following ISA-95 Standard for Manufacturing Operations Management
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// ISA-95 ENTERPRISE HIERARCHY
+// ============================================
+
+model Enterprise {
+  id          String   @id @default(cuid())
+  name        String
+  code        String   @unique
+  description String?
+  
+  // Address Information
+  address     String?  // Street address
+  city        String?
+  state       String?  // State/Province
+  postalCode  String?
+  country     String?
+  
+  // Contact Information
+  phone       String?
+  email       String?
+  website     String?
+  
+  // Business Information
+  industry    String?  // Chemical, Pharmaceutical, Food, Automotive, etc.
+  registrationNumber String? // Business registration/tax ID
+  
+  // System Fields
+  isActive    Boolean  @default(true)
+  isSetup     Boolean  @default(false)  // Whether initial setup is complete
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sites       Site[]
+
+  @@map("isa_enterprise")
+}
+
+model Site {
+  id            String   @id @default(cuid())
+  name          String
+  code          String   @unique
+  description   String?
+  
+  // Site Type & Classification
+  siteType      String   @default("MANUFACTURING")  // MANUFACTURING, DISTRIBUTION, R_D, MIXED_USE, WAREHOUSE
+  primaryFunction String? // Production, Assembly, Packaging, etc.
+  
+  // Physical Address
+  address       String?  // Street address
+  city          String?
+  state         String?  // State/Province
+  postalCode    String?
+  country       String?
+  
+  // Geographic Coordinates
+  latitude      Float?
+  longitude     Float?
+  
+  // Contact Information
+  phone         String?
+  email         String?
+  siteManager   String?  // Name of site manager
+  
+  // Operational Details
+  timezone      String   @default("UTC")
+  operatingHours String? // JSON: {monday: {start: "08:00", end: "17:00"}, ...}
+  capacity      Float?   // Overall site capacity (units/day)
+  areaSqm       Float?   // Total area in square meters
+  
+  // Regulatory & Compliance
+  regulatoryId  String?  // Regulatory/permit number
+  certifications String[] // ISO 9001, ISO 14001, GMP, etc.
+  
+  // System Fields
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  enterpriseId  String
+  enterprise    Enterprise @relation(fields: [enterpriseId], references: [id])
+
+  areas         Area[]
+  users         User[]
+  roles         Role[]
+  edgeConnectors EdgeConnector[]
+
+  @@index([enterpriseId])
+  @@map("isa_site")
+}
+
+model Area {
+  id          String   @id @default(cuid())
+  name        String
+  code        String
+  description String?
+  
+  // Area Type & Classification
+  areaType    String   @default("PRODUCTION")  // PRODUCTION, WAREHOUSE, QUALITY_LAB, MAINTENANCE, OFFICE, UTILITY, SHIPPING, RECEIVING
+  
+  // Physical Location
+  building    String?  // Building number/name
+  floor       String?  // Floor number
+  zone        String?  // Zone designation
+  
+  // Environmental Conditions
+  temperatureMin    Float?  // Min temperature (°C)
+  temperatureMax    Float?  // Max temperature (°C)
+  humidityMin       Float?  // Min humidity (%)
+  humidityMax       Float?  // Max humidity (%)
+  cleanroomClass    String? // ISO Class 5, 6, 7, 8, etc.
+  isHazardous       Boolean @default(false)
+  
+  // Capacity & Resources
+  floorAreaSqm      Float?  // Floor area in square meters
+  maxPersonnel      Int?    // Maximum personnel allowed
+  supervisor        String? // Area supervisor name
+  
+  // Safety & Compliance
+  safetyRequirements String[] // PPE, training, etc.
+  hazardousMaterials String[] // List of hazardous materials present
+  
+  // System Fields
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  siteId      String
+  site        Site    @relation(fields: [siteId], references: [id])
+
+  workCenters WorkCenter[]
+
+  @@unique([siteId, code])
+  @@index([siteId])
+  @@map("isa_area")
+}
+
+model WorkCenter {
+  id          String   @id @default(cuid())
+  name        String
+  code        String
+  description String?
+  
+  // Work Center Type & Classification
+  type        String   @default("PRODUCTION_LINE")  // PRODUCTION_LINE, ASSEMBLY_CELL, BATCH_PROCESS, CONTINUOUS_PROCESS, PACKAGING_LINE, WORK_CELL, PROCESS_UNIT, STORAGE, MAINTENANCE, UTILITY
+  
+  // Capacity Information
+  capacity        Float?  // Rated capacity (units/hour)
+  capacityUnit    String? // units, kg, L, batches
+  efficiency      Float   @default(100) // Design efficiency %
+  
+  // Operating Parameters
+  operatingHours  String? // JSON: {start: "08:00", end: "17:00", shifts: 2}
+  shiftPattern    String? // SINGLE, DOUBLE, TRIPLE, CONTINUOUS
+  availabilitySchedule String? // JSON: weekly availability schedule
+  
+  // Production Details
+  processType     String? // Discrete, Batch, Continuous
+  changeoverTime  Int?    // Changeover time in minutes
+  minBatchSize    Float?
+  maxBatchSize    Float?
+  
+  // Resource Requirements
+  personnelRequired Int?  // Number of operators needed
+  skillRequirements String[] // Required skills/certifications
+  tooling         String[] // Required tooling
+  
+  // Performance Metrics (Targets)
+  targetOEE       Float?  // Target Overall Equipment Effectiveness
+  targetAvailability Float?
+  targetPerformance  Float?
+  targetQuality      Float?
+  
+  // Status
+  status          String  @default("ACTIVE")  // ACTIVE, INACTIVE, UNDER_MAINTENANCE, PLANNED, COMMISSIONING
+  statusReason    String?
+  
+  // System Fields
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  areaId      String
+  area        Area    @relation(fields: [areaId], references: [id])
+
+  workUnits       WorkUnit[]
+  equipment       Equipment[]
+  productionRuns  ProductionRun[]
+  productionOrders ProductionOrder[]
+  oeeRecords      OEERecord[]
+
+  @@unique([areaId, code])
+  @@index([areaId])
+  @@map("isa_work_center")
+}
+
+model WorkUnit {
+  id          String   @id @default(cuid())
+  name        String
+  code        String
+  description String?
+  
+  // Work Unit Type & Classification
+  type        String   @default("OTHER")  // REACTOR, MIXER, CONVEYOR, TANK, PUMP, VALVE, SENSOR, HEAT_EXCHANGER, CENTRIFUGE, DRYER, FILTER, OTHER
+  
+  // Position & Flow
+  sequenceNumber  Int?    // Position in production flow
+  linePosition    String? // UPSTREAM, MAIN, DOWNSTREAM
+  
+  // Processing Capabilities
+  operations      String[] // Operations this unit can perform: MIX, HEAT, COOL, TRANSFER, FILL, etc.
+  standardCycleTime Float? // Standard processing time in minutes
+  minCycleTime    Float?
+  maxCycleTime    Float?
+  
+  // Capacity
+  volume          Float?  // Volume capacity (L)
+  volumeUnit      String? // L, gal, m3
+  throughput      Float?  // Throughput rate
+  throughputUnit  String? // kg/h, L/min, units/min
+  
+  // Operating Parameters
+  minTemperature  Float?  // Min operating temperature
+  maxTemperature  Float?  // Max operating temperature
+  minPressure     Float?  // Min operating pressure
+  maxPressure     Float?  // Max operating pressure
+  operatingSpeed  Float?  // Operating speed (RPM, etc.)
+  
+  // Equipment Reference
+  equipmentId     String? // Reference to physical equipment
+  
+  // Status
+  status          String  @default("ACTIVE")  // ACTIVE, INACTIVE, UNDER_MAINTENANCE, STANDBY
+  
+  // System Fields
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workCenterId String
+  workCenter   WorkCenter @relation(fields: [workCenterId], references: [id])
+
+  equipment         Equipment[]
+  tags              Tag[]
+  productionRunUnits ProductionRunUnit[]
+
+  @@unique([workCenterId, code])
+  @@index([workCenterId])
+  @@map("isa_work_unit")
+}
+
+// ============================================
+// EQUIPMENT & TAGS
+// ============================================
+
+model Equipment {
+  id              String   @id @default(cuid())
+  name            String
+  code            String
+  type            String   // PUMP, VALVE, SENSOR, MOTOR, VFD, PLC, ACTUATOR, INSTRUMENT
+  manufacturer    String?
+  model           String?
+  serialNumber    String?
+  firmwareVersion String?
+  installDate     DateTime?
+  description     String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  workCenterId    String?
+  workCenter      WorkCenter? @relation(fields: [workCenterId], references: [id])
+  workUnitId      String?
+  workUnit        WorkUnit?   @relation(fields: [workUnitId], references: [id])
+
+  tags            Tag[]
+  alarms          Alarm[]
+  healthRecords   AssetHealth[]
+  maintenanceLogs MaintenanceLog[]
+  monitoringRules MonitoringRule[]
+
+  @@unique([code])
+  @@index([workCenterId])
+  @@index([workUnitId])
+  @@map("equipment")
+}
+
+model Tag {
+  id            String   @id @default(cuid())
+  name          String
+  mqttTopic     String   @unique  // Full ISA-95 MQTT topic path
+  dataType      String   // BOOL, INT8, INT16, INT32, INT64, UINT8, UINT16, UINT32, UINT64, FLOAT32, FLOAT64, STRING
+  engUnit       String?  // Engineering units (°C, bar, L/min, %)
+  description   String?
+  scanRate      Int      @default(1000)  // milliseconds
+  minVal        Float?
+  maxVal        Float?
+  deadband      Float?
+  isWritable    Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  tags          String[] // Array of tag labels for filtering
+  metadata      Json?    // Additional metadata as JSON
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  workUnitId    String?
+  workUnit      WorkUnit?   @relation(fields: [workUnitId], references: [id])
+  equipmentId   String?
+  equipment     Equipment?  @relation(fields: [equipmentId], references: [id])
+  edgeConnectorId String?
+  edgeConnector   EdgeConnector? @relation(fields: [edgeConnectorId], references: [id])
+
+  alarmDefinitions AlarmDefinition[]
+  tagMappings      TagMapping[]
+  tagValues        TagValue[]
+
+  @@index([mqttTopic])
+  @@index([workUnitId])
+  @@index([equipmentId])
+  @@map("tags")
+}
+
+model TagValue {
+  id        String   @id @default(cuid())
+  tagId     String
+  value     String
+  quality   String   @default("GOOD")  // GOOD, BAD, UNCERTAIN, INIT
+  timestamp DateTime @default(now())
+
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@index([tagId, timestamp])
+  @@index([timestamp])
+  @@map("tag_values")
+}
+
+// ============================================
+// ALARMS
+// ============================================
+
+model AlarmDefinition {
+  id            String   @id @default(cuid())
+  name          String
+  type          String   // HIGH, LOW, HIGH_HIGH, LOW_LOW, DEVIATION, RATE, BOOL_TRUE, BOOL_FALSE
+  setpoint      Float
+  deadband      Float?
+  delay         Int      @default(0)  // seconds
+  priority      Int      @default(3)  // 1=Critical, 2=High, 3=Medium, 4=Low, 5=Info
+  message       String?
+  onDelay       Int      @default(0)  // seconds to activate
+  offDelay      Int      @default(0)  // seconds to clear
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tagId         String
+  tag           Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  alarms        Alarm[]
+
+  @@index([tagId])
+  @@map("alarm_definitions")
+}
+
+model Alarm {
+  id               String   @id @default(cuid())
+  state            String   @default("ACTIVE")  // ACTIVE, ACKNOWLEDGED, CLEARED, SHELVED
+  shelvedUntil     DateTime?
+  value            Float
+  message          String?
+  activatedAt      DateTime @default(now())
+  acknowledgedAt   DateTime?
+  clearedAt        DateTime?
+  acknowledgedBy   String?
+  shelvedBy        String?
+  sourceTimestamp  DateTime?
+
+  definitionId     String
+  definition       AlarmDefinition @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+  equipmentId      String?
+  equipment        Equipment? @relation(fields: [equipmentId], references: [id])
+
+  @@index([state])
+  @@index([activatedAt])
+  @@index([definitionId])
+  @@map("alarms")
+}
+
+// ============================================
+// PRODUCTION & BATCHES (MES)
+// ============================================
+
+model ProductDefinition {
+  id              String   @id @default(cuid())
+  name            String
+  code            String   @unique
+  description     String?
+  productType     String   // RAW_MATERIAL, INTERMEDIATE, FINISHED_GOOD, CONSUMABLE
+  unit            String?  // kg, L, units
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  recipes         Recipe[]
+  materialLots    MaterialLot[]
+  recipeMaterials RecipeMaterial[]
+
+  @@map("product_definitions")
+}
+
+model Recipe {
+  id              String   @id @default(cuid())
+  name            String
+  version         String
+  description     String?
+  productCode     String?
+  status          String   @default("DRAFT")  // DRAFT, APPROVED, ACTIVE, ARCHIVED, OBSOLETE
+  recipeType      String   @default("PRODUCTION")  // PRODUCTION, CLEANING, MAINTENANCE
+  parameters      Json?    // Process parameters schema
+  steps           Json?     // Recipe steps/procedure
+  equipmentRequirements Json? // Required equipment
+  materials       Json?     // Material requirements
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String?
+  approvedBy      String?
+  approvedAt      DateTime?
+
+  productId       String?
+  product         ProductDefinition? @relation(fields: [productId], references: [id])
+
+  productionRuns  ProductionRun[]
+  recipeMaterials RecipeMaterial[]
+  orders          ProductionOrder[]
+
+  @@unique([name, version])
+  @@index([status])
+  @@map("recipes")
+}
+
+model RecipeMaterial {
+  id           String  @id @default(cuid())
+  quantity     Float
+  phase        String?
+  stepIndex    Int     @default(0)
+  unit         String?
+
+  recipeId     String
+  recipe       Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  materialId   String
+  material     ProductDefinition @relation(fields: [materialId], references: [id])
+
+  @@unique([recipeId, materialId])
+  @@map("recipe_materials")
+}
+
+model ProductionOrder {
+  id              String   @id @default(cuid())
+  orderNumber     String   @unique
+  externalId      String?  // ERP order ID
+  status          String   @default("CREATED")  // CREATED, RELEASED, SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED, HELD
+  quantity        Float
+  producedQty     Float    @default(0)
+  scrapQty        Float    @default(0)
+  plannedStart    DateTime?
+  plannedEnd      DateTime?
+  actualStart     DateTime?
+  actualEnd       DateTime?
+  priority        Int      @default(3)
+  notes           String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  workCenterId    String?
+  workCenter      WorkCenter? @relation(fields: [workCenterId], references: [id])
+  recipeId        String?
+  recipe          Recipe?     @relation(fields: [recipeId], references: [id])
+
+  productionRuns  ProductionRun[]
+
+  @@index([status])
+  @@index([plannedStart])
+  @@map("production_orders")
+}
+
+model ProductionRun {
+  id              String   @id @default(cuid())
+  runNumber       String
+  status          String   @default("IDLE")  // IDLE, RUNNING, HELD, COMPLETE, ABORTED
+  state           String?  // S88 state machine state
+  phase           String?
+  step            String?
+  quantity        Float?
+  progress        Float    @default(0)
+  parameters      Json?
+  startedAt       DateTime?
+  endedAt         DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  workCenterId    String
+  workCenter      WorkCenter @relation(fields: [workCenterId], references: [id])
+  orderId         String?
+  order           ProductionOrder? @relation(fields: [orderId], references: [id])
+  recipeId        String?
+  recipe          Recipe? @relation(fields: [recipeId], references: [id])
+
+  batchUnits      ProductionRunUnit[]
+  consumptions    MaterialConsumption[]
+  genealogy       Genealogy[]
+  stateTransitions ProductionRunStateTransition[]
+
+  @@unique([runNumber])
+  @@index([status])
+  @@index([workCenterId])
+  @@map("production_runs")
+}
+
+model ProductionRunUnit {
+  id          String   @id @default(cuid())
+  status      String   @default("IDLE")
+  state       String?
+  phase       String?
+  startedAt   DateTime?
+  endedAt     DateTime?
+
+  runId       String
+  run         ProductionRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  workUnitId  String
+  workUnit    WorkUnit      @relation(fields: [workUnitId], references: [id])
+
+  @@unique([runId, workUnitId])
+  @@map("production_run_units")
+}
+
+model ProductionRunStateTransition {
+  id            String   @id @default(cuid())
+  fromState     String
+  toState       String
+  trigger       String?
+  parameters    Json?
+  timestamp     DateTime @default(now())
+  userId        String?
+
+  runId         String
+  run           ProductionRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId, timestamp])
+  @@map("production_run_state_transitions")
+}
+
+// ============================================
+// MATERIALS & TRACEABILITY
+// ============================================
+
+model MaterialLot {
+  id              String   @id @default(cuid())
+  lotNumber       String   @unique
+  externalLot     String?  // Supplier lot number
+  quantity        Float
+  remainingQty    Float
+  status          String   @default("AVAILABLE")  // AVAILABLE, RESERVED, IN_USE, CONSUMED, QUARANTINE, REJECTED, EXPIRED
+  expiryDate      DateTime?
+  receivedDate    DateTime @default(now())
+  supplierName    String?
+  supplierCode    String?
+  location        String?  // Current storage location
+  notes           String?
+  customFields    Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  productId       String
+  product         ProductDefinition @relation(fields: [productId], references: [id])
+
+  consumptions    MaterialConsumption[]
+  genealogyFrom   Genealogy[] @relation("GenealogyFrom")
+  genealogyTo     Genealogy[] @relation("GenealogyTo")
+  shipmentLots    ShipmentLot[]
+
+  @@index([status])
+  @@index([productId])
+  @@map("material_lots")
+}
+
+model MaterialConsumption {
+  id           String   @id @default(cuid())
+  quantity     Float
+  timestamp    DateTime @default(now())
+  notes        String?
+
+  runId        String
+  run          ProductionRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  lotId        String
+  lot          MaterialLot  @relation(fields: [lotId], references: [id])
+
+  @@index([runId])
+  @@index([lotId])
+  @@map("material_consumptions")
+}
+
+model Genealogy {
+  id            String   @id @default(cuid())
+  relationship  String   // INPUT_TO, OUTPUT_FROM, TRANSFORMED_TO, MERGED_TO, SPLIT_FROM
+  quantity      Float?
+  notes         String?
+  timestamp     DateTime @default(now())
+
+  runId         String?
+  run           ProductionRun? @relation(fields: [runId], references: [id])
+
+  fromLotId     String?
+  fromLot       MaterialLot? @relation("GenealogyFrom", fields: [fromLotId], references: [id])
+  toLotId       String?
+  toLot         MaterialLot? @relation("GenealogyTo", fields: [toLotId], references: [id])
+
+  @@index([runId])
+  @@index([fromLotId])
+  @@index([toLotId])
+  @@map("genealogy")
+}
+
+model Customer {
+  id             String   @id @default(cuid())
+  name           String
+  code           String   @unique
+  contactName    String?
+  contactEmail   String?
+  contactPhone   String?
+  address        String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  shipments      Shipment[]
+
+  @@map("customers")
+}
+
+model Shipment {
+  id             String   @id @default(cuid())
+  shipmentNumber String   @unique
+  status         String   @default("PENDING")  // PENDING, PREPARING, SHIPPED, IN_TRANSIT, DELIVERED, CANCELLED
+  shippedAt      DateTime?
+  deliveredAt    DateTime?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  customerId     String
+  customer       Customer @relation(fields: [customerId], references: [id])
+
+  lots           ShipmentLot[]
+
+  @@index([status])
+  @@map("shipments")
+}
+
+model ShipmentLot {
+  id           String @id @default(cuid())
+  quantity     Float
+
+  shipmentId   String
+  shipment     Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  lotId        String
+  lot          MaterialLot @relation(fields: [lotId], references: [id])
+
+  @@unique([shipmentId, lotId])
+  @@map("shipment_lots")
+}
+
+// ============================================
+// CONDITION MONITORING & MAINTENANCE
+// ============================================
+
+model AssetHealth {
+  id              String   @id @default(cuid())
+  healthScore     Float    // 0-100
+  status          String   @default("NORMAL")  // NORMAL, WARNING, CRITICAL, UNKNOWN, OFFLINE
+  metrics         Json?    // Vibration, temperature, pressure, etc.
+  anomalies       Json?    // Detected anomalies
+  predictions     Json?    // Predictive maintenance predictions
+  recommendations Json?    // Maintenance recommendations
+  timestamp       DateTime @default(now())
+
+  equipmentId     String
+  equipment       Equipment @relation(fields: [equipmentId], references: [id])
+
+  @@index([equipmentId, timestamp])
+  @@map("asset_health")
+}
+
+model MonitoringRule {
+  id            String   @id @default(cuid())
+  name          String
+  code          String   @unique
+  type          String   // THRESHOLD, ANOMALY, TREND, COMPOSITE, ML_BASED
+  metric        String
+  condition     Json     // Condition definition
+  severity      String   @default("WARNING")  // INFO, WARNING, CRITICAL
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  equipmentId   String?
+  equipment     Equipment? @relation(fields: [equipmentId], references: [id])
+
+  @@index([type])
+  @@map("monitoring_rules")
+}
+
+model MaintenanceLog {
+  id            String   @id @default(cuid())
+  type          String   // PREVENTIVE, CORRECTIVE, PREDICTIVE, EMERGENCY
+  workOrder     String?
+  description   String
+  performedBy   String?
+  performedAt   DateTime @default(now())
+  nextDueDate   DateTime?
+  cost          Float?
+  laborHours    Float?
+  downtimeHours Float?
+  parts         Json?    // Parts used
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  equipmentId   String
+  equipment     Equipment @relation(fields: [equipmentId], references: [id])
+
+  @@index([type])
+  @@index([performedAt])
+  @@map("maintenance_logs")
+}
+
+// ============================================
+// OEE & KPIs
+// ============================================
+
+model OEERecord {
+  id              String   @id @default(cuid())
+  availability    Float
+  performance     Float
+  quality         Float
+  oee             Float
+  runTime         Int?     // minutes
+  plannedTime     Int?     // minutes
+  downtime        Int?     // minutes
+  downtimeReasons Json?
+  goodUnits       Float?
+  totalUnits      Float?
+  scrapUnits      Float?
+  idealCycleTime  Float?
+  timestamp       DateTime @default(now())
+
+  workCenterId    String
+  workCenter      WorkCenter @relation(fields: [workCenterId], references: [id])
+
+  @@index([workCenterId, timestamp])
+  @@map("oee_records")
+}
+
+model EnergyUsage {
+  id          String   @id @default(cuid())
+  value       Float
+  unit        String   @default("kWh")
+  source      String?  // ELECTRICITY, GAS, WATER, COMPRESSED_AIR, STEAM
+  equipmentId String?
+  workCenterId String?
+  siteId      String?
+  timestamp   DateTime @default(now())
+
+  @@index([timestamp])
+  @@index([equipmentId])
+  @@map("energy_usage")
+}
+
+model QualityMetric {
+  id            String   @id @default(cuid())
+  metricType    String   // DEFECT_RATE, YIELD, FIRST_PASS_YIELD, CPK, PPM
+  value         Float
+  target        Float?
+  unit          String?
+  runId         String?
+  workCenterId  String?
+  timestamp     DateTime @default(now())
+
+  @@index([metricType])
+  @@index([timestamp])
+  @@map("quality_metrics")
+}
+
+// ============================================
+// EDGE CONNECTORS
+// ============================================
+
+model EdgeConnector {
+  id              String   @id @default(cuid())
+  name            String
+  code            String   @unique
+  type            String   // OPC_UA, MODBUS_TCP, MODBUS_RTU, S7, ETHERNET_IP, BACNET, DNP3, MQTT
+  protocol        String?  // Protocol details
+  endpoint        String   // Connection endpoint
+  config          Json?    // Connection configuration
+  status          String   @default("OFFLINE")  // ONLINE, OFFLINE, ERROR, MAINTENANCE
+  lastSeen        DateTime?
+  version         String?
+  heartbeatRate   Int      @default(30)  // seconds
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  siteId          String
+  site            Site    @relation(fields: [siteId], references: [id])
+
+  tags            Tag[]
+  tagMappings     TagMapping[]
+  connectorMetrics ConnectorMetric[]
+
+  @@index([type])
+  @@index([status])
+  @@map("edge_connectors")
+}
+
+model TagMapping {
+  id              String   @id @default(cuid())
+  sourceAddress   String   // Address in source system
+  sourceType      String   // COIL, DISCRETE_INPUT, INPUT_REGISTER, HOLDING_REGISTER, TAG, NODE
+  sourceDataType  String?  // Data type in source
+  scale           Float?
+  offset          Float?
+  swapBytes       Boolean  @default(false)
+  isActive        Boolean  @default(true)
+
+  connectorId     String
+  connector       EdgeConnector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
+  tagId           String
+  tag             Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([connectorId, sourceAddress])
+  @@map("tag_mappings")
+}
+
+model ConnectorMetric {
+  id            String   @id @default(cuid())
+  messagesRead  Int      @default(0)
+  messagesError Int      @default(0)
+  latencyMs     Int      @default(0)
+  timestamp     DateTime @default(now())
+
+  connectorId   String
+  connector     EdgeConnector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
+
+  @@index([connectorId, timestamp])
+  @@map("connector_metrics")
+}
+
+// ============================================
+// USER MANAGEMENT & SECURITY
+// ============================================
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  name           String
+  passwordHash   String
+  avatar         String?
+  isActive       Boolean  @default(true)
+  lastLogin      DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  siteId         String?
+  site           Site?    @relation(fields: [siteId], references: [id])
+
+  userRoles      UserRole[]
+  sessions       Session[]
+  auditLogs      AuditLog[]
+  hmiGraphicsCreated HmiGraphic[]
+  hmiSymbolsCreated  HmiSymbol[]
+
+  @@index([email])
+  @@map("users")
+}
+
+model Role {
+  id             String   @id @default(cuid())
+  name           String
+  code           String   @unique
+  permissions    Json     // Array of permission strings
+  description    String?
+  isSystem       Boolean  @default(false)  // System roles cannot be deleted
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  siteId         String?
+  site           Site?    @relation(fields: [siteId], references: [id])
+
+  userRoles      UserRole[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  id     String @id @default(cuid())
+  userId String
+  roleId String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@map("user_roles")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  token        String   @unique
+  refreshToken String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@map("sessions")
+}
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  action         String
+  entityType     String
+  entityId       String?
+  oldValue       Json?
+  newValue       Json?
+  details        Json?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  userId         String?
+  user           User?        @relation(fields: [userId], references: [id])
+
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ============================================
+// SCADA HMI GRAPHICS
+// ============================================
+
+model HmiSymbol {
+  id            String   @id @default(cuid())
+  name          String
+  category      String   // pump, valve, tank, pipe, motor, etc.
+  svg           String   @db.Text // Inline SVG markup
+  isPredefined  Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  createdById   String?
+  createdBy     User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  elements      HmiGraphicElement[]
+
+  @@index([category])
+  @@index([isPredefined])
+  @@map("hmi_symbols")
+}
+
+model HmiGraphic {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  width         Int      // Canvas width in px
+  height        Int      // Canvas height in px
+  metadata      Json?    // Future options
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  createdById   String
+  createdBy     User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  elements      HmiGraphicElement[]
+
+  @@index([createdById])
+  @@map("hmi_graphics")
+}
+
+model HmiGraphicElement {
+  id            String   @id @default(cuid())
+  graphicId     String
+  symbolId      String
+  x             Float    @default(0)
+  y             Float    @default(0)
+  width         Float    @default(100)
+  height        Float    @default(100)
+  rotation      Float    @default(0)  // degrees
+  zIndex        Int      @default(0)
+  props         Json     @default("{}") // bindings: { tagId, property }, control: { type, tagId?, writeValue? }
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  graphic       HmiGraphic @relation(fields: [graphicId], references: [id], onDelete: Cascade)
+  symbol        HmiSymbol  @relation(fields: [symbolId], references: [id], onDelete: Restrict)
+
+  @@index([graphicId])
+  @@index([symbolId])
+  @@map("hmi_graphic_elements")
+}
+
+// ============================================
+// SYSTEM CONFIGURATION
+// ============================================
+
+model SystemConfig {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       Json
+  description String?
+  category    String?
+  updatedAt   DateTime @updatedAt
+  updatedBy   String?
+
+  @@map("system_config")
+}
+
+model DataRetentionPolicy {
+  id              String   @id @default(cuid())
+  name            String
+  dataType        String   // TAG_VALUES, ALARMS, OEE, ENERGY, QUALITY
+  rawRetention    Int      @default(7)     // Days
+  downsample      Boolean  @default(true)
+  downsampleTo    String?  // HOURLY, DAILY, WEEKLY
+  archiveAfter    Int?     // Days before archiving
+  archivePath     String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([dataType])
+  @@map("data_retention_policies")
+}
+
+model MqttTopicSubscription {
+  id          String   @id @default(cuid())
+  topic       String
+  qos         Int      @default(0)
+  isActive    Boolean  @default(true)
+  description String?
+  createdAt   DateTime @default(now())
+
+  @@unique([topic])
+  @@map("mqtt_topic_subscriptions")
+}

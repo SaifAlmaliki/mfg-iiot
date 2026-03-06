@@ -1,0 +1,47 @@
+# Grafana Datasources Configuration
+# Auto-provisioned datasources for UNS Platform
+
+apiVersion: 1
+
+datasources:
+  # InfluxDB - Time series data (primary for metrics)
+  - name: InfluxDB
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    isDefault: true
+    editable: false
+    jsonData:
+      version: Flux
+      organization: uns-platform
+      defaultBucket: manufacturing
+      tlsSkipVerify: true
+    secureJsonData:
+      token: uns-platform-super-secret-token
+
+  # PostgreSQL - Relational data
+  - name: PostgreSQL
+    type: postgres
+    access: proxy
+    url: postgres:5432
+    database: uns_manufacturing
+    user: uns_user
+    editable: false
+    jsonData:
+      sslmode: disable
+      maxOpenConns: 10
+      maxIdleConns: 5
+      connMaxLifetime: 14400
+      postgresVersion: 1600
+      timescaledb: false
+    secureJsonData:
+      password: uns_password
+
+  # EMQX MQTT Broker metrics
+  - name: EMQX
+    type: prometheus
+    access: proxy
+    url: http://emqx:18083/api/v5/prometheus/stats
+    editable: false
+    jsonData:
+      timeInterval: "15s"

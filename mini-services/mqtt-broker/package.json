@@ -1,0 +1,13 @@
+{
+  "name": "mqtt-broker",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "bun --hot index.ts"
+  },
+  "dependencies": {
+    "aedes": "^0.51.0",
+    "aedes-persistence-level": "^8.0.0",
+    "level": "^8.0.1"
+  }
+}

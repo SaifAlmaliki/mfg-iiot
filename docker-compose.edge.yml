@@ -1,0 +1,156 @@
+# UNS Platform - Edge Connectors
+# Docker Compose for edge deployment (can run standalone at the edge)
+
+services:
+  # ============================================
+  # Local EMQX Broker (for edge operation)
+  # ============================================
+  emqx-edge:
+    image: emqx/emqx:5.8.0
+    container_name: edge-emqx
+    ports:
+      - "1883:1883"      # MQTT TCP
+      - "8083:8083"      # MQTT WebSocket
+      - "18083:18083"    # Dashboard
+    environment:
+      - EMQX_NAME=edge-emqx
+      - EMQX_HOST=0.0.0.0
+      - EMQX_DASHBOARD__DEFAULT_USERNAME=admin
+      - EMQX_DASHBOARD__DEFAULT_PASSWORD=edge_admin_2024
+    volumes:
+      - emqx-edge-data:/opt/emqx/data
+      - emqx-edge-log:/opt/emqx/log
+    networks:
+      - edge-network
+    restart: unless-stopped
+
+  # ============================================
+  # OPC UA Connector
+  # ============================================
+  opcua-connector:
+    build:
+      context: ../services/edge-connectors/opcua-connector
+      dockerfile: Dockerfile
+    container_name: edge-opcua-connector
+    environment:
+      - NODE_ENV=production
+      - MQTT_URL=mqtt://emqx-edge:1883
+      - MQTT_CLIENT_ID=edge-opcua-${CONNECTOR_ID:-01}
+      - ENTERPRISE=${ENTERPRISE:-Demo-Manufacturing}
+      - SITE=${SITE:-Plant-01}
+      - CONNECTOR_CODE=${CONNECTOR_CODE:-OPCUA-01}
+      # OPC UA Configuration
+      - OPCUA_ENDPOINT=${OPCUA_ENDPOINT:-opc.tcp://localhost:4840}
+      - OPCUA_SECURITY_MODE=${OPCUA_SECURITY_MODE:-None}
+      - OPCUA_SECURITY_POLICY=${OPCUA_SECURITY_POLICY:-None}
+      - OPCUA_USERNAME=${OPCUA_USERNAME:-}
+      - OPCUA_PASSWORD=${OPCUA_PASSWORD:-}
+      # Central broker for bridging
+      - CENTRAL_MQTT_URL=${CENTRAL_MQTT_URL:-}
+      - CENTRAL_MQTT_USERNAME=${CENTRAL_MQTT_USERNAME:-}
+      - CENTRAL_MQTT_PASSWORD=${CENTRAL_MQTT_PASSWORD:-}
+      - HEARTBEAT_INTERVAL=30
+    volumes:
+      - ./config/opcua-tags.json:/app/config/tags.json:ro
+    depends_on:
+      - emqx-edge
+    networks:
+      - edge-network
+    restart: unless-stopped
+
+  # ============================================
+  # Modbus TCP Connector
+  # ============================================
+  modbus-connector:
+    build:
+      context: ../services/edge-connectors/modbus-connector
+      dockerfile: Dockerfile
+    container_name: edge-modbus-connector
+    environment:
+      - NODE_ENV=production
+      - MQTT_URL=mqtt://emqx-edge:1883
+      - MQTT_CLIENT_ID=edge-modbus-${CONNECTOR_ID:-01}
+      - ENTERPRISE=${ENTERPRISE:-Demo-Manufacturing}
+      - SITE=${SITE:-Plant-01}
+      - CONNECTOR_CODE=${CONNECTOR_CODE:-MODBUS-01}
+      # Modbus Configuration
+      - MODBUS_HOST=${MODBUS_HOST:-192.168.1.100}
+      - MODBUS_PORT=${MODBUS_PORT:-502}
+      - MODBUS_UNIT_ID=${MODBUS_UNIT_ID:-1}
+      - MODBUS_POLL_INTERVAL=${MODBUS_POLL_INTERVAL:-1000}
+      # Central broker for bridging
+      - CENTRAL_MQTT_URL=${CENTRAL_MQTT_URL:-}
+      - CENTRAL_MQTT_USERNAME=${CENTRAL_MQTT_USERNAME:-}
+      - CENTRAL_MQTT_PASSWORD=${CENTRAL_MQTT_PASSWORD:-}
+      - HEARTBEAT_INTERVAL=30
+    volumes:
+      - ./config/modbus-tags.json:/app/config/tags.json:ro
+    depends_on:
+      - emqx-edge
+    networks:
+      - edge-network
+    restart: unless-stopped
+
+  # ============================================
+  # Siemens S7 Connector
+  # ============================================
+  s7-connector:
+    build:
+      context: ../services/edge-connectors/s7-connector
+      dockerfile: Dockerfile
+    container_name: edge-s7-connector
+    environment:
+      - NODE_ENV=production
+      - MQTT_URL=mqtt://emqx-edge:1883
+      - MQTT_CLIENT_ID=edge-s7-${CONNECTOR_ID:-01}
+      - ENTERPRISE=${ENTERPRISE:-Demo-Manufacturing}
+      - SITE=${SITE:-Plant-01}
+      - CONNECTOR_CODE=${CONNECTOR_CODE:-S7-01}
+      # S7 Configuration
+      - S7_HOST=${S7_HOST:-192.168.1.10}
+      - S7_PORT=${S7_PORT:-102}
+      - S7_RACK=${S7_RACK:-0}
+      - S7_SLOT=${S7_SLOT:-1}
+      - S7_POLL_INTERVAL=${S7_POLL_INTERVAL:-1000}
+      # Central broker for bridging
+      - CENTRAL_MQTT_URL=${CENTRAL_MQTT_URL:-}
+      - CENTRAL_MQTT_USERNAME=${CENTRAL_MQTT_USERNAME:-}
+      - CENTRAL_MQTT_PASSWORD=${CENTRAL_MQTT_PASSWORD:-}
+      - HEARTBEAT_INTERVAL=30
+    volumes:
+      - ./config/s7-tags.json:/app/config/tags.json:ro
+    depends_on:
+      - emqx-edge
+    networks:
+      - edge-network
+    restart: unless-stopped
+
+  # ============================================
+  # Edge Data Logger (local history)
+  # ============================================
+  edge-logger:
+    build:
+      context: ../services/edge-logger
+      dockerfile: Dockerfile
+    container_name: edge-logger
+    environment:
+      - NODE_ENV=production
+      - MQTT_URL=mqtt://emqx-edge:1883
+      - DATABASE_PATH=/data/edge_history.db
+      - RETENTION_DAYS=7
+    volumes:
+      - edge-logger-data:/data
+    depends_on:
+      - emqx-edge
+    networks:
+      - edge-network
+    restart: unless-stopped
+
+networks:
+  edge-network:
+    driver: bridge
+
+volumes:
+  emqx-edge-data:
+  emqx-edge-log:
+  edge-logger-data:

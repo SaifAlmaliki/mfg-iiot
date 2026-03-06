@@ -1,0 +1,972 @@
+$ bun --hot index.ts
+46 |     }
+47 |   }
+48 |   let er;
+49 |   if (args.length > 0)
+50 |     er = args[0];
+51 |     throw er;
+                 ^
+error: Failed to start server. Is port 3005 in use?
+      at emitError (node:events:51[BRIDGE] TIC-101-SP changed to 84.7°C
+[BRIDGE] MOT-101 changed to 2103 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 85.7°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 69.3°C
+[BRIDGE] FIC-101 changed to 315 L/min
+[BRIDGE] TIC-101-SP changed to 88.9°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 88.9°C
+[BRIDGE] MOT-101 changed to 1520 RPM
+[BRIDGE] TIC-101-SP changed to 78.9°C
+[BRIDGE] MOT-101 changed to 2304 RPM
+[BRIDGE] MOT-101 changed to 1562 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 2165 RPM
+[BRIDGE] TIC-101-SP changed to 73.9°C
+[BRIDGE] TIC-101-SP changed to 66.3°C
+[BRIDGE] TIC-101-SP changed to 88.4°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1442 RPM
+[BRIDGE] MOT-101 changed to 1749 RPM
+[BRIDGE] MOT-101 changed to 2169 RPM
+[BRIDGE] TIC-101-SP changed to 72.8°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 76.1°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 87.4°C
+[BRIDGE] FIC-101 changed to 246 L/min
+[BRIDGE] TIC-101-SP changed to 65.5°C
+[BRIDGE] MOT-101 changed to 1849 RPM
+[BRIDGE] TIC-101-SP changed to 79.4°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1652 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 66.4°C
+[BRIDGE] MOT-101 changed to 2414 RPM
+[BRIDGE] FIC-101 changed to 242 L/min
+[BRIDGE] TIC-101-SP changed to 78.2°C
+[BRIDGE] MOT-101 changed to 1781 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 72.0°C
+[BRIDGE] MOT-101 changed to 1142 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] FIC-101 changed to 189 L/min
+[BRIDGE] MOT-101 changed to 1488 RPM
+[BRIDGE] TIC-101-SP changed to 73.7°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] FIC-101 changed to 260 L/min
+[BRIDGE] TIC-101-SP changed to 66.9°C
+[BRIDGE] TIC-101-SP changed to 72.0°C
+[BRIDGE] TIC-101-SP changed to 74.6°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 2077 RPM
+[BRIDGE] MOT-101 changed to 1034 RPM
+[BRIDGE] FIC-101 changed to 193 L/min
+[BRIDGE] TIC-101-SP changed to 69.5°C
+[BRIDGE] TIC-101-SP changed to 71.7°C
+[BRIDGE] TIC-101-SP changed to 84.5°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 88.5°C
+[BRIDGE] MOT-101 changed to 1691 RPM
+[BRIDGE] TIC-101-SP changed to 82.0°C
+[BRIDGE] TIC-101-SP changed to 70.7°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 75.5°C
+[BRIDGE] MOT-101 changed to 1643 RPM
+[BRIDGE] FIC-101 changed to 175 L/min
+[BRIDGE] TIC-101-SP changed to 68.2°C
+[BRIDGE] TIC-101-SP changed to 87.6°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 82.2°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 81.3°C
+[BRIDGE] TIC-101-SP changed to 80.7°C
+[BRIDGE] TIC-101-SP changed to 75.4°C
+[BRIDGE] MOT-101 changed to 1073 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 76.4°C
+[BRIDGE] FIC-101 changed to 368 L/min
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1932 RPM
+[BRIDGE] TIC-101-SP changed to 69.0°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 86.9°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] FIC-101 changed to 387 L/min
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 78.6°C
+[BRIDGE] MOT-101 changed to 2317 RPM
+[BRIDGE] TIC-101-SP changed to 79.2°C
+[BRIDGE] TIC-101-SP changed to 83.4°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] FIC-101 changed to 254 L/min
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1800 RPM
+[BRIDGE] FIC-101 changed to 298 L/min
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 69.1°C
+[BRIDGE] TIC-101-SP changed to 67.2°C
+[BRIDGE] FIC-101 changed to 180 L/min
+[BRIDGE] TIC-101-SP changed to 72.7°C
+[BRIDGE] MOT-101 changed to 1131 RPM
+[BRIDGE] FIC-101 changed to 295 L/min
+[BRIDGE] MOT-101 changed to 2052 RPM
+[BRIDGE] FIC-101 changed to 363 L/min
+[BRIDGE] TIC-101-SP changed to 77.6°C
+[BRIDGE] FIC-101 changed to 184 L/min
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 2440 RPM
+[BRIDGE] MOT-101 changed to 2057 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1407 RPM
+[BRIDGE] TIC-101-SP changed to 69.9°C
+[BRIDGE] MOT-101 changed to 2477 RPM
+[BRIDGE] TIC-101-SP changed to 89.2°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1341 RPM
+[BRIDGE] TIC-101-SP changed to 71.0°C
+[BRIDGE] MOT-101 changed to 1268 RPM
+[BRIDGE] MOT-101 changed to 2272 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 69.3°C
+[BRIDGE] TIC-101-SP changed to 89.9°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 76.7°C
+[BRIDGE] MOT-101 changed to 1244 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] FIC-101 changed to 233 L/min
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 76.3°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 2332 RPM
+[BRIDGE] MOT-101 changed to 1644 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 80.3°C
+[BRIDGE] MOT-101 changed to 1599 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 78.6°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 82.9°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] FIC-101 changed to 377 L/min
+[BRIDGE] TIC-101-SP changed to 79.4°C
+[BRIDGE] FIC-101 changed to 157 L/min
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 76.5°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 2138 RPM
+[BRIDGE] FIC-101 changed to 199 L/min
+[BRIDGE] TIC-101-SP changed to 84.0°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 2473 RPM
+[BRIDGE] TIC-101-SP changed to 77.9°C
+[BRIDGE] TIC-101-SP changed to 88.0°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 66.4°C
+[BRIDGE] TIC-101-SP changed to 75.7°C
+[BRIDGE] TIC-101-SP changed to 83.9°C
+[BRIDGE] TIC-101-SP changed to 88.5°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 84.8°C
+[BRIDGE] TIC-101-SP changed to 73.1°C
+[BRIDGE] TIC-101-SP changed to 86.3°C
+[BRIDGE] MOT-101 changed to 1311 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 2261 RPM
+[BRIDGE] TIC-101-SP changed to 76.4°C
+[BRIDGE] TIC-101-SP changed to 87.3°C
+[BRIDGE] MOT-101 changed to 1491 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 87.9°C
+[BRIDGE] MOT-101 changed to 1066 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] FIC-101 changed to 267 L/min
+[BRIDGE] MOT-101 changed to 1487 RPM
+[BRIDGE] MOT-101 changed to 2372 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 84.2°C
+[BRIDGE] MOT-101 changed to 1668 RPM
+[BRIDGE] MOT-101 changed to 2409 RPM
+[BRIDGE] TIC-101-SP changed to 71.6°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 2071 RPM
+[BRIDGE] TIC-101-SP changed to 79.6°C
+[BRIDGE] FIC-101 changed to 399 L/min
+[BRIDGE] TIC-101-SP changed to 72.5°C
+[BRIDGE] MOT-101 changed to 1166 RPM
+[BRIDGE] TIC-101-SP changed to 72.2°C
+[BRIDGE] FIC-101 changed to 230 L/min
+[BRIDGE] FIC-101 changed to 245 L/min
+[BRIDGE] MOT-101 changed to 1267 RPM
+[BRIDGE] MOT-101 changed to 2106 RPM
+[BRIDGE] FIC-101 changed to 211 L/min
+[BRIDGE] TIC-101-SP changed to 71.8°C
+[BRIDGE] TIC-101-SP changed to 79.0°C
+[BRIDGE] MOT-101 changed to 2231 RPM
+[BRIDGE] TIC-101-SP changed to 78.6°C
+[BRIDGE] MOT-101 changed to 1255 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1159 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 69.6°C
+[BRIDGE] MOT-101 changed to 1064 RPM
+[BRIDGE] MOT-101 changed to 1219 RPM
+[BRIDGE] FIC-101 changed to 351 L/min
+[BRIDGE] TIC-101-SP changed to 66.4°C
+[BRIDGE] MOT-101 changed to 1950 RPM
+[BRIDGE] TIC-101-SP changed to 73.4°C
+[BRIDGE] FIC-101 changed to 265 L/min
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 87.9°C
+[BRIDGE] TIC-101-SP changed to 83.0°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1242 RPM
+[BRIDGE] TIC-101-SP changed to 79.5°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 67.5°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1919 RPM
+[BRIDGE] TIC-101-SP changed to 79.0°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 77.4°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 2166 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 73.9°C
+[BRIDGE] MOT-101 changed to 1129 RPM
+[BRIDGE] TIC-101-SP changed to 71.0°C
+[BRIDGE] TIC-101-SP changed to 83.9°C
+[BRIDGE] MOT-101 changed to 1373 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 72.3°C
+[BRIDGE] TIC-101-SP changed to 88.8°C
+[BRIDGE] FIC-101 changed to 349 L/min
+[BRIDGE] TIC-101-SP changed to 85.9°C
+[BRIDGE] MOT-101 changed to 2177 RPM
+[BRIDGE] MOT-101 changed to 2409 RPM
+[BRIDGE] MOT-101 changed to 1238 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 84.8°C
+[BRIDGE] FIC-101 changed to 263 L/min
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1812 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 87.3°C
+[BRIDGE] TIC-101-SP changed to 85.5°C
+[BRIDGE] MOT-101 changed to 2482 RPM
+[BRIDGE] TIC-101-SP changed to 89.6°C
+[BRIDGE] TIC-101-SP changed to 81.4°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 77.5°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 81.6°C
+[BRIDGE] FIC-101 changed to 212 L/min
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] FIC-101 changed to 231 L/min
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] FIC-101 changed to 188 L/min
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 80.9°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 2112 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 83.5°C
+[BRIDGE] TIC-101-SP changed to 82.2°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 2375 RPM
+[BRIDGE] FIC-101 changed to 360 L/min
+[BRIDGE] MOT-101 changed to 1631 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] FIC-101 changed to 360 L/min
+[BRIDGE] MOT-101 changed to 2100 RPM
+[BRIDGE] FIC-101 changed to 251 L/min
+[BRIDGE] MOT-101 changed to 2235 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 85.3°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 85.6°C
+[BRIDGE] FIC-101 changed to 290 L/min
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] FIC-101 changed to 352 L/min
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 80.3°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 67.2°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1596 RPM
+[BRIDGE] TIC-101-SP changed to 71.4°C
+[BRIDGE] TIC-101-SP changed to 70.0°C
+[BRIDGE] MOT-101 changed to 1523 RPM
+[BRIDGE] TIC-101-SP changed to 82.3°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 79.6°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 2092 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 83.4°C
+[BRIDGE] MOT-101 changed to 1416 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 88.8°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1376 RPM
+[BRIDGE] MOT-101 changed to 1675 RPM
+[BRIDGE] MOT-101 changed to 2020 RPM
+[BRIDGE] MOT-101 changed to 1541 RPM
+[BRIDGE] TIC-101-SP changed to 84.6°C
+[BRIDGE] MOT-101 changed to 1410 RPM
+[BRIDGE] TIC-101-SP changed to 76.7°C
+[BRIDGE] TIC-101-SP changed to 89.8°C
+[BRIDGE] FIC-101 changed to 197 L/min
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1304 RPM
+[BRIDGE] TIC-101-SP changed to 68.7°C
+[BRIDGE] TIC-101-SP changed to 76.9°C
+[BRIDGE] TIC-101-SP changed to 75.3°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 67.6°C
+[BRIDGE] MOT-101 changed to 2428 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 81.9°C
+[BRIDGE] MOT-101 changed to 1233 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 89.9°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 2329 RPM
+[BRIDGE] TIC-101-SP changed to 82.3°C
+[BRIDGE] TIC-101-SP changed to 66.6°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 2089 RPM
+[BRIDGE] TIC-101-SP changed to 89.6°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1516 RPM
+[BRIDGE] MOT-101 changed to 1434 RPM
+[BRIDGE] TIC-101-SP changed to 88.8°C
+[BRIDGE] TIC-101-SP changed to 69.4°C
+[BRIDGE] FIC-101 changed to 246 L/min
+[BRIDGE] MOT-101 changed to 2260 RPM
+[BRIDGE] TIC-101-SP changed to 71.9°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 82.4°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1472 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 77.0°C
+[BRIDGE] TIC-101-SP changed to 70.8°C
+[BRIDGE] TIC-101-SP changed to 79.9°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 2345 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1830 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 76.9°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 2128 RPM
+[BRIDGE] MOT-101 changed to 2127 RPM
+[BRIDGE] MOT-101 changed to 2112 RPM
+[BRIDGE] MOT-101 changed to 2066 RPM
+[BRIDGE] MOT-101 changed to 2055 RPM
+[BRIDGE] MOT-101 changed to 1726 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 65.5°C
+[BRIDGE] FIC-101 changed to 293 L/min
+[BRIDGE] TIC-101-SP changed to 78.6°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 75.8°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 77.6°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1815 RPM
+[BRIDGE] FIC-101 changed to 385 L/min
+[BRIDGE] FIC-101 changed to 201 L/min
+[BRIDGE] MOT-101 changed to 2229 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 88.8°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 66.8°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] FIC-101 changed to 301 L/min
+[BRIDGE] MOT-101 changed to 2350 RPM
+[BRIDGE] MOT-101 changed to 1991 RPM
+[BRIDGE] FIC-101 changed to 283 L/min
+[BRIDGE] TIC-101-SP changed to 84.7°C
+[BRIDGE] TIC-101-SP changed to 85.0°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 73.1°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 80.9°C
+[BRIDGE] FIC-101 changed to 277 L/min
+[BRIDGE] TIC-101-SP changed to 81.0°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 2140 RPM
+[BRIDGE] FIC-101 changed to 381 L/min
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 2452 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1586 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 2196 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 79.8°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1943 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 85.8°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] FIC-101 changed to 201 L/min
+[BRIDGE] TIC-101-SP changed to 67.5°C
+[BRIDGE] FIC-101 changed to 365 L/min
+[BRIDGE] TIC-101-SP changed to 89.9°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 73.6°C
+[BRIDGE] TIC-101-SP changed to 80.1°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 72.5°C
+[BRIDGE] FIC-101 changed to 358 L/min
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 75.5°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 89.6°C
+[BRIDGE] MOT-101 changed to 2020 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 78.4°C
+[BRIDGE] MOT-101 changed to 1795 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] FIC-101 changed to 203 L/min
+[BRIDGE] TIC-101-SP changed to 70.3°C
+[BRIDGE] MOT-101 changed to 1537 RPM
+[BRIDGE] TIC-101-SP changed to 69.0°C
+[BRIDGE] FIC-101 changed to 385 L/min
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 69.1°C
+[BRIDGE] TIC-101-SP changed to 87.4°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 66.6°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1708 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 84.1°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] FIC-101 changed to 336 L/min
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] FIC-101 changed to 388 L/min
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1068 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 79.0°C
+[BRIDGE] TIC-101-SP changed to 71.4°C
+[BRIDGE] MOT-101 changed to 1272 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 74.9°C
+[BRIDGE] TIC-101-SP changed to 77.2°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 69.9°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1613 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 2183 RPM
+[BRIDGE] TIC-101-SP changed to 79.7°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 2286 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 82.9°C
+[BRIDGE] MOT-101 changed to 1727 RPM
+[BRIDGE] TIC-101-SP changed to 68.2°C
+[BRIDGE] MOT-101 changed to 1889 RPM
+[BRIDGE] MOT-101 changed to 1665 RPM
+[BRIDGE] FIC-101 changed to 190 L/min
+[BRIDGE] MOT-101 changed to 1345 RPM
+[BRIDGE] TIC-101-SP changed to 65.3°C
+[BRIDGE] TIC-101-SP changed to 68.8°C
+[BRIDGE] FIC-101 changed to 231 L/min
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 72.6°C
+[BRIDGE] MOT-101 changed to 1055 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 78.2°C
+[BRIDGE] TIC-101-SP changed to 75.8°C
+[BRIDGE] MOT-101 changed to 1526 RPM
+[BRIDGE] TIC-101-SP changed to 65.1°C
+[BRIDGE] FIC-101 changed to 241 L/min
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] FIC-101 changed to 320 L/min
+[BRIDGE] MOT-101 changed to 1191 RPM
+[BRIDGE] TIC-101-SP changed to 77.1°C
+[BRIDGE] MOT-101 changed to 2249 RPM
+[BRIDGE] MOT-101 changed to 1783 RPM
+[BRIDGE] MOT-101 changed to 1378 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 69.3°C
+[BRIDGE] MOT-101 changed to 1929 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1248 RPM
+[BRIDGE] MOT-101 changed to 1017 RPM
+[BRIDGE] TIC-101-SP changed to 71.5°C
+[BRIDGE] MOT-101 changed to 2211 RPM
+[BRIDGE] TIC-101-SP changed to 70.9°C
+[BRIDGE] TIC-101-SP changed to 71.5°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 66.7°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] FIC-101 changed to 261 L/min
+[BRIDGE] MOT-101 changed to 1261 RPM
+[BRIDGE] MOT-101 changed to 1246 RPM
+[BRIDGE] MOT-101 changed to 1788 RPM
+[BRIDGE] TIC-101-SP changed to 75.9°C
+[BRIDGE] MOT-101 changed to 1263 RPM
+[BRIDGE] MOT-101 changed to 1143 RPM
+[BRIDGE] TIC-101-SP changed to 90.0°C
+[BRIDGE] MOT-101 changed to 2049 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 85.5°C
+[BRIDGE] TIC-101-SP changed to 65.8°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] FIC-101 changed to 197 L/min
+[BRIDGE] MOT-101 changed to 1868 RPM
+[BRIDGE] MOT-101 changed to 1046 RPM
+[BRIDGE] TIC-101-SP changed to 84.0°C
+[BRIDGE] TIC-101-SP changed to 69.6°C
+[BRIDGE] MOT-101 changed to 2387 RPM
+[BRIDGE] TIC-101-SP changed to 89.9°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 71.9°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1250 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1191 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 2262 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 85.3°C
+[BRIDGE] MOT-101 changed to 2329 RPM
+[BRIDGE] MOT-101 changed to 1250 RPM
+[BRIDGE] MOT-101 changed to 2325 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 65.0°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 2283 RPM
+[BRIDGE] TIC-101-SP changed to 89.0°C
+[BRIDGE] TIC-101-SP changed to 76.0°C
+[BRIDGE] TIC-101-SP changed to 79.1°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] FIC-101 changed to 307 L/min
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 69.6°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 87.9°C
+[BRIDGE] MOT-101 changed to 1805 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 70.1°C
+[BRIDGE] MOT-101 changed to 2290 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1394 RPM
+[BRIDGE] MOT-101 changed to 2495 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1216 RPM
+[BRIDGE] MOT-101 changed to 2004 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 79.3°C
+[BRIDGE] TIC-101-SP changed to 83.5°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 72.2°C
+[BRIDGE] MOT-101 changed to 2049 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 81.1°C
+[BRIDGE] MOT-101 changed to 2244 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 86.6°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 82.1°C
+[BRIDGE] FIC-101 changed to 189 L/min
+[BRIDGE] MOT-101 changed to 1863 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 65.6°C
+[BRIDGE] TIC-101-SP changed to 70.5°C
+[BRIDGE] MOT-101 changed to 2042 RPM
+[BRIDGE] TIC-101-SP changed to 67.7°C
+[BRIDGE] MOT-101 changed to 2144 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1622 RPM
+[BRIDGE] TIC-101-SP changed to 75.3°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 2052 RPM
+[BRIDGE] TIC-101-SP changed to 74.5°C
+[BRIDGE] TIC-101-SP changed to 79.8°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1333 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 67.3°C
+[BRIDGE] FIC-101 changed to 231 L/min
+[BRIDGE] TIC-101-SP changed to 83.6°C
+[BRIDGE] TIC-101-SP changed to 75.5°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1172 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 78.2°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 70.5°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 87.3°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 73.1°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 81.0°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1226 RPM
+[BRIDGE] TIC-101-SP changed to 80.3°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 86.0°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1822 RPM
+[BRIDGE] TIC-101-SP changed to 70.6°C
+[BRIDGE] TIC-101-SP changed to 76.6°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 70.3°C
+[BRIDGE] MOT-101 changed to 2168 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 72.3°C
+[BRIDGE] MOT-101 changed to 1817 RPM
+[BRIDGE] MOT-101 changed to 1964 RPM
+[BRIDGE] TIC-101-SP changed to 76.3°C
+[BRIDGE] TIC-101-SP changed to 88.4°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] FIC-101 changed to 348 L/min
+[BRIDGE] TIC-101-SP changed to 67.6°C
+[BRIDGE] FIC-101 changed to 292 L/min
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 66.4°C
+[BRIDGE] TIC-101-SP changed to 77.1°C
+[BRIDGE] MOT-101 changed to 2075 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 2115 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1326 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1800 RPM
+[BRIDGE] TIC-101-SP changed to 79.6°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 85.4°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 84.5°C
+[BRIDGE] TIC-101-SP changed to 86.0°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 73.9°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 79.4°C
+[BRIDGE] FIC-101 changed to 365 L/min
+[BRIDGE] MOT-101 changed to 1396 RPM
+[BRIDGE] TIC-101-SP changed to 66.4°C
+[BRIDGE] TIC-101-SP changed to 87.5°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 69.4°C
+[BRIDGE] TIC-101-SP changed to 68.5°C
+[BRIDGE] TIC-101-SP changed to 78.4°C
+[BRIDGE] FIC-101 changed to 256 L/min
+[BRIDGE] TIC-101-SP changed to 79.8°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 76.0°C
+[BRIDGE] MOT-101 changed to 1904 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 67.1°C
+[BRIDGE] MOT-101 changed to 1699 RPM
+[BRIDGE] TIC-101-SP changed to 89.1°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] MOT-101 changed to 1296 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 84.2°C
+[BRIDGE] FIC-101 changed to 319 L/min
+[BRIDGE] FIC-101 changed to 285 L/min
+[BRIDGE] MOT-101 changed to 1337 RPM
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 87.8°C
+[BRIDGE] 1 new alarm(s) detected
+[BRIDGE] TIC-101-SP changed to 89.1°C

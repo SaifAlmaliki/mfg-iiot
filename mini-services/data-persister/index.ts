@@ -1,0 +1,546 @@
+/**
+ * UNS Data Persister Service
+ * 
+ * Subscribes to MQTT topics and persists:
+ * - Telemetry data to InfluxDB (time-series)
+ * - Alarm events to PostgreSQL
+ * - Equipment status to PostgreSQL
+ * - Batch state changes to PostgreSQL
+ * 
+ * Port: 3110 (Health check API)
+ */
+
+import mqtt, { MqttClient } from 'mqtt';
+import { PrismaClient } from '@prisma/client';
+
+// Configuration
+const MQTT_URL = process.env.MQTT_BROKER_URL || 'mqtt://localhost:1883';
+const HEALTH_PORT = 3110;
+
+// InfluxDB Configuration (optional - will work without it)
+const INFLUX_URL = process.env.INFLUXDB_URL || 'http://localhost:8086';
+const INFLUX_TOKEN = process.env.INFLUXDB_TOKEN || 'uns-platform-token';
+const INFLUX_ORG = process.env.INFLUXDB_ORG || 'uns-platform';
+const INFLUX_BUCKET = process.env.INFLUXDB_BUCKET || 'manufacturing';
+
+// Initialize Prisma
+const prisma = new PrismaClient();
+
+// MQTT Client
+let mqttClient: MqttClient | null = null;
+
+// InfluxDB client (optional)
+let influxWriteApi: any = null;
+let influxEnabled = false;
+
+// Stats
+const stats = {
+  messagesProcessed: 0,
+  messagesError: 0,
+  lastMessageTime: null as Date | null,
+  startTime: new Date(),
+};
+
+// ============================================
+// InfluxDB Setup (Optional)
+// ============================================
+
+async function setupInfluxDB() {
+  try {
+    const { InfluxDB, Point } = await import('@influxdata/influxdb-client');
+    
+    const influxDB = new InfluxDB({ url: INFLUX_URL, token: INFLUX_TOKEN });
+    influxWriteApi = influxDB.getWriteApi(INFLUX_ORG, INFLUX_BUCKET, 'ms');
+    influxEnabled = true;
+    console.log('[InfluxDB] Connected and ready');
+  } catch (error) {
+    console.log('[InfluxDB] Not available - data will be stored in PostgreSQL only');
+    influxEnabled = false;
+  }
+}
+
+// ============================================
+// MQTT Connection
+// ============================================
+
+function connectMQTT() {
+  mqttClient = mqtt.connect(MQTT_URL, {
+    clientId: `data-persister-${Date.now()}`,
+    clean: true,
+    keepalive: 60,
+    reconnectPeriod: 5000,
+  });
+
+  mqttClient.on('connect', () => {
+    console.log('[MQTT] Connected to broker');
+    
+    // Subscribe to all topics we want to persist
+    const topics = [
+      'ACME/#',  // All enterprise data
+    ];
+    
+    topics.forEach(topic => {
+      mqttClient?.subscribe(topic, { qos: 1 }, (err) => {
+        if (err) {
+          console.error(`[MQTT] Failed to subscribe to ${topic}:`, err);
+        } else {
+          console.log(`[MQTT] Subscribed to ${topic}`);
+        }
+      });
+    });
+  });
+
+  mqttClient.on('message', async (topic: string, payload: Buffer) => {
+    try {
+      await processMessage(topic, payload);
+      stats.messagesProcessed++;
+      stats.lastMessageTime = new Date();
+    } catch (error) {
+      stats.messagesError++;
+      console.error('[MQTT] Error processing message:', error);
+    }
+  });
+
+  mqttClient.on('error', (error) => {
+    console.error('[MQTT] Error:', error);
+  });
+
+  mqttClient.on('close', () => {
+    console.log('[MQTT] Connection closed');
+  });
+}
+
+// ============================================
+// Message Processing
+// ============================================
+
+async function processMessage(topic: string, payload: Buffer) {
+  const payloadStr = payload.toString();
+  
+  // Try to parse as JSON
+  let message: any;
+  try {
+    message = JSON.parse(payloadStr);
+  } catch {
+    // Not JSON, treat as raw value
+    message = { value: payloadStr };
+  }
+
+  // Parse topic to determine message type
+  const topicParts = topic.split('/');
+  
+  if (topicParts.length < 6) {
+    // Not an ISA-95 topic, skip
+    return;
+  }
+
+  const [enterprise, site, area, workCenter, workUnit, ...attributeParts] = topicParts;
+  const attribute = attributeParts.join('/');
+
+  // Determine message category and process accordingly
+  if (attribute.includes('/value') || attribute.includes('/setpoint')) {
+    await processTelemetry(topic, message, { enterprise, site, area, workCenter, workUnit, attribute });
+  } else if (attribute.includes('/alarm')) {
+    await processAlarm(topic, message, { enterprise, site, area, workCenter, workUnit });
+  } else if (attribute.includes('/status')) {
+    await processEquipmentStatus(topic, message, { enterprise, site, area, workCenter, workUnit });
+  } else if (attribute.includes('/batch/')) {
+    await processBatchState(topic, message, { enterprise, site, area, workCenter });
+  } else if (attribute.includes('/heartbeat')) {
+    await processHeartbeat(topic, message, { enterprise, site });
+  }
+
+  // Always try to write to InfluxDB if enabled
+  if (influxEnabled && influxWriteApi) {
+    await writeToInfluxDB(topic, message, { enterprise, site, area, workCenter, workUnit, attribute });
+  }
+}
+
+// ============================================
+// Telemetry Processing
+// ============================================
+
+async function processTelemetry(
+  topic: string, 
+  message: any, 
+  context: { enterprise: string; site: string; area: string; workCenter: string; workUnit: string; attribute: string }
+) {
+  // Find or create tag
+  let tag = await prisma.tag.findFirst({
+    where: { mqttTopic: topic },
+  });
+
+  if (!tag) {
+    // Try to find by partial match
+    const baseTopic = topic.replace('/value', '').replace('/setpoint', '');
+    tag = await prisma.tag.findFirst({
+      where: { mqttTopic: { contains: baseTopic } },
+    });
+  }
+
+  if (tag) {
+    // Store tag value
+    const value = typeof message.value !== 'undefined' ? String(message.value) : String(message);
+    const quality = message.quality || 'GOOD';
+    
+    await prisma.tagValue.create({
+      data: {
+        tagId: tag.id,
+        value,
+        quality,
+        timestamp: message.timestamp ? new Date(message.timestamp) : new Date(),
+      },
+    });
+
+    // Check for alarm conditions
+    await checkAlarmConditions(tag, value, context);
+  }
+}
+
+// ============================================
+// Alarm Processing
+// ============================================
+
+async function processAlarm(
+  topic: string,
+  message: any,
+  context: { enterprise: string; site: string; area: string; workCenter: string; workUnit: string }
+) {
+  if (message.state === 'ACTIVE') {
+    // Create new alarm
+    await prisma.alarm.create({
+      data: {
+        state: 'ACTIVE',
+        value: message.value || 0,
+        message: message.message || `Alarm from ${context.workUnit}`,
+        activatedAt: new Date(message.activatedAt || Date.now()),
+        definitionId: message.alarmDefinitionId || '',
+      },
+    });
+  } else if (message.state === 'CLEARED' && message.alarmId) {
+    // Clear existing alarm
+    await prisma.alarm.updateMany({
+      where: { id: message.alarmId },
+      data: {
+        state: 'CLEARED',
+        clearedAt: new Date(),
+      },
+    });
+  }
+}
+
+// ============================================
+// Equipment Status Processing
+// ============================================
+
+async function processEquipmentStatus(
+  topic: string,
+  message: any,
+  context: { enterprise: string; site: string; area: string; workCenter: string; workUnit: string }
+) {
+  // Find equipment by code
+  const equipment = await prisma.equipment.findFirst({
+    where: { code: context.workUnit },
+  });
+
+  if (equipment && message.healthScore) {
+    // Record asset health
+    await prisma.assetHealth.create({
+      data: {
+        healthScore: message.healthScore,
+        status: message.status || 'NORMAL',
+        metrics: message.metrics || {},
+        anomalies: message.anomalies || [],
+        predictions: message.predictions || {},
+        recommendations: message.recommendations || [],
+        equipmentId: equipment.id,
+      },
+    });
+  }
+}
+
+// ============================================
+// Batch State Processing
+// ============================================
+
+async function processBatchState(
+  topic: string,
+  message: any,
+  context: { enterprise: string; site: string; area: string; workCenter: string }
+) {
+  if (message.batchId && message.state) {
+    // Record state transition
+    const run = await prisma.productionRun.findFirst({
+      where: { runNumber: message.batchId },
+    });
+
+    if (run) {
+      await prisma.productionRunStateTransition.create({
+        data: {
+          fromState: run.state || 'IDLE',
+          toState: message.state,
+          trigger: message.trigger,
+          parameters: message.parameters || {},
+          runId: run.id,
+        },
+      });
+
+      // Update run state
+      await prisma.productionRun.update({
+        where: { id: run.id },
+        data: {
+          state: message.state,
+          phase: message.phase,
+          step: message.step,
+          progress: message.progress || run.progress,
+        },
+      });
+    }
+  }
+}
+
+// ============================================
+// Heartbeat Processing
+// ============================================
+
+async function processHeartbeat(
+  topic: string,
+  message: any,
+  context: { enterprise: string; site: string }
+) {
+  // Find connector by code
+  const connector = await prisma.edgeConnector.findFirst({
+    where: { 
+      code: message.source,
+      site: { code: context.site },
+    },
+  });
+
+  if (connector) {
+    await prisma.edgeConnector.update({
+      where: { id: connector.id },
+      data: {
+        status: message.status === 'HEALTHY' ? 'ONLINE' : 
+                message.status === 'DEGRADED' ? 'MAINTENANCE' : 'ERROR',
+        lastSeen: new Date(),
+      },
+    });
+
+    // Record metrics
+    await prisma.connectorMetric.create({
+      data: {
+        messagesRead: message.metrics?.messagesProcessed || 0,
+        messagesError: message.metrics?.errors || 0,
+        latencyMs: message.metrics?.latencyMs || 0,
+        connectorId: connector.id,
+      },
+    });
+  }
+}
+
+// ============================================
+// Alarm Condition Checking
+// ============================================
+
+async function checkAlarmConditions(
+  tag: any,
+  value: string,
+  context: { enterprise: string; site: string; area: string; workCenter: string; workUnit: string }
+) {
+  const numericValue = parseFloat(value);
+  if (isNaN(numericValue)) return;
+
+  // Get alarm definitions for this tag
+  const definitions = await prisma.alarmDefinition.findMany({
+    where: { tagId: tag.id, isActive: true },
+  });
+
+  for (const def of definitions) {
+    let shouldAlarm = false;
+    
+    switch (def.type) {
+      case 'HIGH':
+        shouldAlarm = numericValue > def.setpoint;
+        break;
+      case 'HIGH_HIGH':
+        shouldAlarm = numericValue > def.setpoint;
+        break;
+      case 'LOW':
+        shouldAlarm = numericValue < def.setpoint;
+        break;
+      case 'LOW_LOW':
+        shouldAlarm = numericValue < def.setpoint;
+        break;
+      case 'DEVIATION':
+        shouldAlarm = Math.abs(numericValue - def.setpoint) > (def.deadband || 0);
+        break;
+    }
+
+    if (shouldAlarm) {
+      // Check if alarm already active
+      const existingAlarm = await prisma.alarm.findFirst({
+        where: { definitionId: def.id, state: 'ACTIVE' },
+      });
+
+      if (!existingAlarm) {
+        // Create new alarm
+        await prisma.alarm.create({
+          data: {
+            state: 'ACTIVE',
+            value: numericValue,
+            message: def.message || `${tag.name} ${def.type} alarm`,
+            activatedAt: new Date(),
+            definitionId: def.id,
+          },
+        });
+
+        console.log(`[Alarm] Created alarm for ${tag.name}: ${def.type} at ${numericValue}`);
+      }
+    }
+  }
+}
+
+// ============================================
+// InfluxDB Writing
+// ============================================
+
+async function writeToInfluxDB(
+  topic: string,
+  message: any,
+  context: { enterprise: string; site: string; area: string; workCenter: string; workUnit: string; attribute: string }
+) {
+  if (!influxWriteApi) return;
+
+  try {
+    const { Point } = await import('@influxdata/influxdb-client');
+    
+    const point = new Point('telemetry')
+      .tag('enterprise', context.enterprise)
+      .tag('site', context.site)
+      .tag('area', context.area)
+      .tag('workCenter', context.workCenter)
+      .tag('workUnit', context.workUnit)
+      .tag('topic', topic)
+      .tag('attribute', context.attribute);
+
+    // Add value based on type
+    const value = message.value !== undefined ? message.value : message;
+    
+    if (typeof value === 'number') {
+      point.floatField('value', value);
+    } else if (typeof value === 'boolean') {
+      point.booleanField('value', value);
+    } else if (typeof value === 'string') {
+      // Try to parse as number
+      const num = parseFloat(value);
+      if (!isNaN(num)) {
+        point.floatField('value', num);
+      } else {
+        point.stringField('value', value);
+      }
+    }
+
+    // Add quality if present
+    if (message.quality) {
+      point.stringField('quality', message.quality);
+    }
+
+    influxWriteApi.writePoint(point);
+  } catch (error) {
+    console.error('[InfluxDB] Write error:', error);
+  }
+}
+
+// ============================================
+// Health Check API
+// ============================================
+
+async function startHealthServer() {
+  const server = Bun.serve({
+    port: HEALTH_PORT,
+    async fetch(req) {
+      const url = new URL(req.url);
+      
+      if (url.pathname === '/health') {
+        return Response.json({
+          status: 'healthy',
+          uptime: Math.floor((Date.now() - stats.startTime.getTime()) / 1000),
+          mqtt: mqttClient?.connected ? 'connected' : 'disconnected',
+          influxdb: influxEnabled ? 'enabled' : 'disabled',
+          stats: {
+            messagesProcessed: stats.messagesProcessed,
+            messagesError: stats.messagesError,
+            lastMessageTime: stats.lastMessageTime,
+          },
+        });
+      }
+      
+      if (url.pathname === '/stats') {
+        return Response.json(stats);
+      }
+      
+      return new Response('Not Found', { status: 404 });
+    },
+  });
+
+  console.log(`[Health] Health check server listening on port ${HEALTH_PORT}`);
+}
+
+// ============================================
+// Periodic Tasks
+// ============================================
+
+async function flushInfluxDB() {
+  if (influxWriteApi) {
+    try {
+      await influxWriteApi.flush();
+    } catch (error) {
+      console.error('[InfluxDB] Flush error:', error);
+    }
+  }
+}
+
+// Flush InfluxDB every 5 seconds
+setInterval(flushInfluxDB, 5000);
+
+// ============================================
+// Start Service
+// ============================================
+
+async function start() {
+  console.log('[Data Persister] Starting...');
+  
+  // Test database connection
+  await prisma.$connect();
+  console.log('[DB] Connected to PostgreSQL');
+
+  // Setup InfluxDB (optional)
+  await setupInfluxDB();
+
+  // Connect to MQTT
+  connectMQTT();
+
+  // Start health check server
+  await startHealthServer();
+
+  console.log('[Data Persister] Ready');
+}
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('[Shutdown] SIGTERM received');
+  await flushInfluxDB();
+  await prisma.$disconnect();
+  mqttClient?.end();
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  console.log('[Shutdown] SIGINT received');
+  await flushInfluxDB();
+  await prisma.$disconnect();
+  mqttClient?.end();
+  process.exit(0);
+});
+
+start();

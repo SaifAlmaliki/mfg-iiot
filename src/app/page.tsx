@@ -1,0 +1,80 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { cn } from '@/lib/utils';
+import { AppSidebar } from '@/components/layout/app-sidebar';
+import { DashboardOverview } from '@/components/dashboard/dashboard-overview';
+import { HierarchyPanel } from '@/components/hierarchy/hierarchy-panel';
+import { ScadaPanel } from '@/components/scada/scada-panel';
+import { MesPanel } from '@/components/mes/mes-panel';
+import { TraceabilityPanel } from '@/components/traceability/traceability-panel';
+import { MonitoringPanel } from '@/components/monitoring/monitoring-panel';
+import { EdgePanel } from '@/components/edge/edge-panel';
+import { AdminPanel } from '@/components/admin/admin-panel';
+import { useNavigationStore } from '@/lib/store';
+import { Toaster } from '@/components/ui/sonner';
+
+export default function Home() {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const currentModule = useNavigationStore((state) => state.currentModule);
+
+  // Detect mobile screen size
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth >= 768) {
+        setSidebarCollapsed(false);
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const renderContent = () => {
+    if (currentModule === 'hierarchy') {
+      return <HierarchyPanel />;
+    }
+    if (currentModule.startsWith('scada')) {
+      return <ScadaPanel />;
+    }
+    if (currentModule.startsWith('mes')) {
+      return <MesPanel />;
+    }
+    if (currentModule.startsWith('traceability')) {
+      return <TraceabilityPanel />;
+    }
+    if (currentModule.startsWith('monitoring')) {
+      return <MonitoringPanel />;
+    }
+    if (currentModule === 'edge') {
+      return <EdgePanel />;
+    }
+    if (currentModule.startsWith('admin')) {
+      return <AdminPanel />;
+    }
+    // Default to dashboard
+    return <DashboardOverview />;
+  };
+
+  return (
+    <div className="flex h-screen bg-background">
+      {/* Desktop Sidebar */}
+      <AppSidebar
+        collapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+      />
+      
+      {/* Main Content */}
+      <main className={cn(
+        "flex-1 overflow-auto",
+        isMobile && "pt-14" // Add top padding for mobile header
+      )}>
+        {renderContent()}
+      </main>
+      <Toaster />
+    </div>
+  );
+}
