@@ -503,6 +503,7 @@ model ProductionRun {
   state           String?  // S88 state machine state
   phase           String?
   step            String?
+  stepIndex       Int      @default(0)  // current recipe step index
   quantity        Float?
   progress        Float    @default(0)
   parameters      Json?

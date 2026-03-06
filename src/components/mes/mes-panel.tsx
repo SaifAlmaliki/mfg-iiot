@@ -54,9 +54,12 @@ import {
   Eye,
   Loader2,
   AlertCircle,
+  RotateCcw,
+  SkipForward,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useRuns, type ProductionRunSummary, type RunCommand } from '@/hooks/use-runs';
 
 // Types
 interface Product {
@@ -165,6 +168,14 @@ export function MesPanel() {
   // Work centers for order assignment
   const [workCenters, setWorkCenters] = useState<WorkCenter[]>([]);
   
+  // Runs (batch execution)
+  const { runs, total: runsTotal, loading: runsLoading, error: runsError, refetch: refetchRuns, sendRunCommand } = useRuns({ limit: 50 });
+  const [runDialogOpen, setRunDialogOpen] = useState(false);
+  const [runForm, setRunForm] = useState({ runNumber: '', workCenterId: '', recipeId: '', orderId: '', quantity: '', parameters: '' });
+  const [runFormErrors, setRunFormErrors] = useState<Record<string, string>>({});
+  const [runSubmitting, setRunSubmitting] = useState(false);
+  const [commandingRunId, setCommandingRunId] = useState<string | null>(null);
+  
   // Order form state
   const [orderForm, setOrderForm] = useState({
     orderNumber: '',
@@ -272,9 +283,11 @@ export function MesPanel() {
       case 'APPROVED':
         return 'bg-blue-500';
       case 'COMPLETED':
+      case 'COMPLETE':
         return 'bg-slate-500';
       case 'CREATED':
       case 'DRAFT':
+      case 'IDLE':
         return 'bg-yellow-500';
       case 'HELD':
         return 'bg-orange-500';
@@ -692,6 +705,7 @@ export function MesPanel() {
           <TabsList className="w-full sm:w-auto flex gap-1">
             <TabsTrigger value="orders" className="text-xs md:text-sm px-3 md:px-4">Orders</TabsTrigger>
             <TabsTrigger value="recipes" className="text-xs md:text-sm px-3 md:px-4">Recipes</TabsTrigger>
+            <TabsTrigger value="runs" className="text-xs md:text-sm px-3 md:px-4">Runs</TabsTrigger>
             <TabsTrigger value="materials" className="text-xs md:text-sm px-3 md:px-4">Materials</TabsTrigger>
           </TabsList>
         </ScrollArea>
@@ -843,6 +857,215 @@ export function MesPanel() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Runs Tab */}
+        <TabsContent value="runs" className="space-y-3 md:space-y-4">
+          <div className="flex justify-between items-center">
+            <div className="text-xs md:text-sm text-muted-foreground">
+              {runsTotal} runs
+            </div>
+            <Button onClick={() => { setRunForm({ runNumber: `RUN-${new Date().getFullYear()}-${String(runs.length + 1).padStart(4, '0')}`, workCenterId: '', recipeId: '', orderId: '', quantity: '', parameters: '' }); setRunFormErrors({}); setRunDialogOpen(true); }} size="sm" className="h-8 md:h-9">
+              <Plus className="w-3.5 h-3.5 md:w-4 md:h-4 md:mr-2" />
+              <span className="hidden md:inline">New Run</span>
+              <span className="md:hidden">New</span>
+            </Button>
+          </div>
+
+          <Card>
+            <CardContent className="p-0 md:p-6">
+              {runsError && (
+                <p className="text-sm text-destructive py-2">{runsError}</p>
+              )}
+              {runsLoading ? (
+                <div className="flex items-center justify-center py-6 md:py-8">
+                  <Loader2 className="w-5 h-5 md:w-6 md:h-6 animate-spin" />
+                </div>
+              ) : runs.length === 0 ? (
+                <div className="text-center py-6 md:py-8 text-muted-foreground text-sm">
+                  No runs found. Create a run from a recipe and work center.
+                </div>
+              ) : (
+                <ScrollArea className="w-full">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Run #</TableHead>
+                        <TableHead>Recipe</TableHead>
+                        <TableHead>Work Center</TableHead>
+                        <TableHead>Phase / Step</TableHead>
+                        <TableHead>Progress</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {runs.map((run) => (
+                        <TableRow key={run.id}>
+                          <TableCell className="font-medium text-xs md:text-sm">{run.runNumber}</TableCell>
+                          <TableCell className="text-xs md:text-sm">{run.recipe ? `${run.recipe.name} ${run.recipe.version}` : '-'}</TableCell>
+                          <TableCell className="text-xs md:text-sm">{run.workCenter?.name ?? run.workCenterId}</TableCell>
+                          <TableCell className="text-xs md:text-sm">{run.phase || run.step || '-'}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1 md:gap-2">
+                              <Progress value={run.progress} className="w-12 md:w-20 h-1.5 md:h-2" />
+                              <span className="text-[10px] md:text-xs text-muted-foreground">{run.progress}%</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={`${getStatusColor(run.status)} text-[10px] md:text-xs`}>
+                              {run.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-0.5 md:gap-1">
+                              {run.status === 'IDLE' && (
+                                <Button size="sm" variant="default" className="h-7 text-[10px] md:text-xs px-2 md:px-3" disabled={commandingRunId === run.id} onClick={async () => { setCommandingRunId(run.id); const r = await sendRunCommand(run.id, 'START'); setCommandingRunId(null); if (!r.success) toast.error(r.error); else toast.success('Run started'); }}>
+                                  {commandingRunId === run.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
+                                  <span className="hidden md:inline ml-1">Start</span>
+                                </Button>
+                              )}
+                              {run.status === 'RUNNING' && (
+                                <>
+                                  <Button size="sm" variant="outline" className="h-7 text-[10px] md:text-xs px-2 md:px-3" disabled={commandingRunId === run.id} onClick={async () => { setCommandingRunId(run.id); const r = await sendRunCommand(run.id, 'HOLD'); setCommandingRunId(null); if (!r.success) toast.error(r.error); else toast.success('Run held'); }}>
+                                    <Pause className="w-3 h-3" />
+                                  </Button>
+                                  <Button size="sm" variant="outline" className="h-7 text-[10px] md:text-xs px-2 md:px-3" disabled={commandingRunId === run.id} onClick={async () => { setCommandingRunId(run.id); const r = await sendRunCommand(run.id, 'STEP_COMPLETE'); setCommandingRunId(null); if (!r.success) toast.error(r.error); else toast.success('Step complete'); }}>
+                                    <SkipForward className="w-3 h-3" />
+                                    <span className="hidden md:inline ml-1">Step</span>
+                                  </Button>
+                                  <Button size="sm" variant="outline" className="h-7 text-[10px] md:text-xs px-2 md:px-3" disabled={commandingRunId === run.id} onClick={async () => { setCommandingRunId(run.id); const r = await sendRunCommand(run.id, 'COMPLETE'); setCommandingRunId(null); if (!r.success) toast.error(r.error); else toast.success('Run complete'); }}>
+                                    <CheckCircle className="w-3 h-3" />
+                                    <span className="hidden md:inline ml-1">Complete</span>
+                                  </Button>
+                                  <Button size="sm" variant="outline" className="h-7 text-[10px] md:text-xs px-2 md:px-3 text-destructive" disabled={commandingRunId === run.id} onClick={async () => { setCommandingRunId(run.id); const r = await sendRunCommand(run.id, 'ABORT'); setCommandingRunId(null); if (!r.success) toast.error(r.error); else toast.success('Run aborted'); }}>
+                                    <Square className="w-3 h-3" />
+                                    <span className="hidden md:inline ml-1">Abort</span>
+                                  </Button>
+                                </>
+                              )}
+                              {run.status === 'HELD' && (
+                                <Button size="sm" variant="default" className="h-7 text-[10px] md:text-xs px-2 md:px-3" disabled={commandingRunId === run.id} onClick={async () => { setCommandingRunId(run.id); const r = await sendRunCommand(run.id, 'RESUME'); setCommandingRunId(null); if (!r.success) toast.error(r.error); else toast.success('Run resumed'); }}>
+                                  {commandingRunId === run.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
+                                  <span className="hidden md:inline ml-1">Resume</span>
+                                </Button>
+                              )}
+                              {(run.status === 'COMPLETE' || run.status === 'ABORTED') && (
+                                <Button size="sm" variant="outline" className="h-7 text-[10px] md:text-xs px-2 md:px-3" disabled={commandingRunId === run.id} onClick={async () => { setCommandingRunId(run.id); const r = await sendRunCommand(run.id, 'RESET'); setCommandingRunId(null); if (!r.success) toast.error(r.error); else toast.success('Run reset'); }}>
+                                  <RotateCcw className="w-3 h-3" />
+                                  <span className="hidden md:inline ml-1">Reset</span>
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </ScrollArea>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* New Run Dialog */}
+          <Dialog open={runDialogOpen} onOpenChange={setRunDialogOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>New Run</DialogTitle>
+                <DialogDescription>Create a production run from a recipe and work center.</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="runNumber">Run number *</Label>
+                  <Input id="runNumber" value={runForm.runNumber} onChange={(e) => setRunForm((f) => ({ ...f, runNumber: e.target.value }))} placeholder="RUN-2024-0001" className={runFormErrors.runNumber ? 'border-destructive' : ''} />
+                  {runFormErrors.runNumber && <p className="text-sm text-destructive">{runFormErrors.runNumber}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="workCenterId">Work center *</Label>
+                  <Select value={runForm.workCenterId} onValueChange={(v) => setRunForm((f) => ({ ...f, workCenterId: v }))}>
+                    <SelectTrigger className={runFormErrors.workCenterId ? 'border-destructive' : ''}>
+                      <SelectValue placeholder="Select work center" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {workCenters.map((wc) => (
+                        <SelectItem key={wc.id} value={wc.id}>{wc.name} ({wc.code})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {runFormErrors.workCenterId && <p className="text-sm text-destructive">{runFormErrors.workCenterId}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="recipeId">Recipe *</Label>
+                  <Select value={runForm.recipeId} onValueChange={(v) => setRunForm((f) => ({ ...f, recipeId: v }))}>
+                    <SelectTrigger className={runFormErrors.recipeId ? 'border-destructive' : ''}>
+                      <SelectValue placeholder="Select recipe" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {recipes.filter((r) => r.status === 'ACTIVE').map((r) => (
+                        <SelectItem key={r.id} value={r.id}>{r.name} {r.version}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {runFormErrors.recipeId && <p className="text-sm text-destructive">{runFormErrors.recipeId}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label>Order (optional)</Label>
+                  <Select value={runForm.orderId || 'none'} onValueChange={(v) => setRunForm((f) => ({ ...f, orderId: v === 'none' ? '' : v }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="None" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {orders.filter((o) => o.status === 'RELEASED' || o.status === 'IN_PROGRESS').map((o) => (
+                        <SelectItem key={o.id} value={o.id}>{o.orderNumber}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="quantity">Quantity (optional)</Label>
+                  <Input id="quantity" type="number" value={runForm.quantity} onChange={(e) => setRunForm((f) => ({ ...f, quantity: e.target.value }))} placeholder="0" />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setRunDialogOpen(false)}>Cancel</Button>
+                <Button disabled={runSubmitting} onClick={async () => {
+                  const err: Record<string, string> = {};
+                  if (!runForm.runNumber.trim()) err.runNumber = 'Run number is required';
+                  if (!runForm.workCenterId) err.workCenterId = 'Work center is required';
+                  if (!runForm.recipeId) err.recipeId = 'Recipe is required';
+                  setRunFormErrors(err);
+                  if (Object.keys(err).length > 0) return;
+                  setRunSubmitting(true);
+                  try {
+                    const res = await fetch('/api/runs', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        runNumber: runForm.runNumber.trim(),
+                        workCenterId: runForm.workCenterId,
+                        recipeId: runForm.recipeId,
+                        orderId: runForm.orderId || undefined,
+                        quantity: runForm.quantity ? parseFloat(runForm.quantity) : undefined,
+                      }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Failed to create run');
+                    toast.success('Run created');
+                    setRunDialogOpen(false);
+                    refetchRuns();
+                  } catch (e) {
+                    toast.error(e instanceof Error ? e.message : 'Failed to create run');
+                  } finally {
+                    setRunSubmitting(false);
+                  }
+                }}>
+                  {runSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  Create Run
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         {/* Recipes Tab */}

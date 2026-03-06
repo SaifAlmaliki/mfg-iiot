@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { hashPassword } from '@/lib/auth-config';
 
 // GET /api/users - List users
 export async function GET(request: NextRequest) {
@@ -42,20 +43,19 @@ export async function POST(request: NextRequest) {
     
     // Check if email already exists
     const existingUser = await db.user.findUnique({
-      where: { email }
+      where: { email: (email || '').toString().trim().toLowerCase() },
     });
     
     if (existingUser) {
       return NextResponse.json({ error: 'Email already exists' }, { status: 400 });
     }
-    
-    // Hash password (simple hash for demo - in production use bcrypt)
-    const passwordHash = password ? Buffer.from(password).toString('base64') : '';
+
+    const passwordHash = password ? await hashPassword(password) : '';
     
     const user = await db.user.create({
       data: {
         name,
-        email,
+        email: (email || '').toString().trim().toLowerCase(),
         passwordHash,
         siteId: siteId || null,
         isActive: isActive ?? true,

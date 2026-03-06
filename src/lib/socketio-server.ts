@@ -9,6 +9,7 @@ import { Server } from 'socket.io';
 
 const DEFAULT_PORT = 3001;
 const TAG_ROOM_PREFIX = 'tag:';
+const RUN_ROOM_PREFIX = 'run:';
 
 declare global {
   // eslint-disable-next-line no-var
@@ -55,6 +56,24 @@ export function startSocketIOServer(): void {
         if (typeof tagId === 'string' && tagId) {
           socket.leave(`${TAG_ROOM_PREFIX}${tagId}`);
         }
+      }
+    });
+
+    socket.on('subscribe:runs', () => {
+      socket.join('runs');
+    });
+
+    socket.on('subscribe:run', (data: { runId?: string } | string) => {
+      const runId = typeof data === 'string' ? data : data?.runId;
+      if (typeof runId === 'string' && runId) {
+        socket.join(`${RUN_ROOM_PREFIX}${runId}`);
+      }
+    });
+
+    socket.on('unsubscribe:run', (data: { runId?: string } | string) => {
+      const runId = typeof data === 'string' ? data : data?.runId;
+      if (typeof runId === 'string' && runId) {
+        socket.leave(`${RUN_ROOM_PREFIX}${runId}`);
       }
     });
   });

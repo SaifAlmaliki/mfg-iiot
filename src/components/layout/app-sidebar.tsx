@@ -27,6 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { useNavigationStore } from '@/lib/store';
+import { useAuthStore } from '@/lib/auth-store';
 
 interface NavItem {
   id: string;
@@ -119,6 +120,7 @@ interface SidebarContentProps {
 function SidebarContent({ collapsed = false, onNavigate }: SidebarContentProps) {
   const [expandedItems, setExpandedItems] = useState<string[]>(['scada', 'mes']);
   const { currentModule, setCurrentModule } = useNavigationStore();
+  const { user, logout } = useAuthStore();
 
   const toggleExpanded = (id: string) => {
     setExpandedItems((prev) =>
@@ -238,10 +240,10 @@ function SidebarContent({ collapsed = false, onNavigate }: SidebarContentProps) 
               <User className="w-3.5 h-3.5 md:w-4 md:h-4" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs md:text-sm font-medium truncate">Admin User</p>
-              <p className="text-[10px] md:text-xs text-slate-400 truncate">admin@plant.com</p>
+              <p className="text-xs md:text-sm font-medium truncate">{user?.name ?? 'User'}</p>
+              <p className="text-[10px] md:text-xs text-slate-400 truncate">{user?.email ?? ''}</p>
             </div>
-            <Button variant="ghost" size="icon" className="text-slate-400 h-7 w-7 md:h-8 md:w-8">
+            <Button variant="ghost" size="icon" className="text-slate-400 h-7 w-7 md:h-8 md:w-8" onClick={() => logout()}>
               <LogOut className="w-3.5 h-3.5 md:w-4 md:h-4" />
             </Button>
           </div>
@@ -262,7 +264,7 @@ export function AppSidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Desktop Sidebar */}
       <div
         className={cn(
-          'hidden md:flex flex-col h-screen bg-slate-900 text-white transition-all duration-300',
+          'hidden md:flex flex-col h-screen shrink-0 bg-slate-900 text-white transition-all duration-300',
           collapsed ? 'w-16' : 'w-64'
         )}
       >

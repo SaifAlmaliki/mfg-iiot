@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { DashboardOverview } from '@/components/dashboard/dashboard-overview';
@@ -12,12 +13,27 @@ import { MonitoringPanel } from '@/components/monitoring/monitoring-panel';
 import { EdgePanel } from '@/components/edge/edge-panel';
 import { AdminPanel } from '@/components/admin/admin-panel';
 import { useNavigationStore } from '@/lib/store';
+import { useAuthStore } from '@/lib/auth-store';
 import { Toaster } from '@/components/ui/sonner';
 
 export default function Home() {
+  const pathname = usePathname();
+  const { user, isInitialized, refreshSession } = useAuthStore();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const currentModule = useNavigationStore((state) => state.currentModule);
+
+  useEffect(() => {
+    refreshSession();
+  }, [refreshSession]);
+
+  useEffect(() => {
+    if (!isInitialized) return;
+    if (!user && pathname === '/') {
+      window.location.href = '/login';
+      return;
+    }
+  }, [isInitialized, user, pathname]);
 
   // Detect mobile screen size
   useEffect(() => {
@@ -61,19 +77,27 @@ export default function Home() {
 
   return (
     <div className="flex h-screen bg-background">
-      {/* Desktop Sidebar */}
-      <AppSidebar
-        collapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-      />
-      
-      {/* Main Content */}
-      <main className={cn(
-        "flex-1 overflow-auto",
-        isMobile && "pt-14" // Add top padding for mobile header
-      )}>
-        {renderContent()}
-      </main>
+      {(!isInitialized || !user) ? (
+        <div className="flex items-center justify-center flex-1">
+          <p className="text-muted-foreground">Loading…</p>
+        </div>
+      ) : (
+        <>
+          {/* Desktop Sidebar */}
+          <AppSidebar
+            collapsed={sidebarCollapsed}
+            onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+          />
+
+          {/* Main Content */}
+          <main className={cn(
+            "flex-1 overflow-auto",
+            isMobile && "pt-14" // Add top padding for mobile header
+          )}>
+            {renderContent()}
+          </main>
+        </>
+      )}
       <Toaster />
     </div>
   );

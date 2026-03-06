@@ -27,11 +27,13 @@ export type AggregateProductionRun = {
 }
 
 export type ProductionRunAvgAggregateOutputType = {
+  stepIndex: number | null
   quantity: number | null
   progress: number | null
 }
 
 export type ProductionRunSumAggregateOutputType = {
+  stepIndex: number | null
   quantity: number | null
   progress: number | null
 }
@@ -43,6 +45,7 @@ export type ProductionRunMinAggregateOutputType = {
   state: string | null
   phase: string | null
   step: string | null
+  stepIndex: number | null
   quantity: number | null
   progress: number | null
   startedAt: Date | null
@@ -61,6 +64,7 @@ export type ProductionRunMaxAggregateOutputType = {
   state: string | null
   phase: string | null
   step: string | null
+  stepIndex: number | null
   quantity: number | null
   progress: number | null
   startedAt: Date | null
@@ -79,6 +83,7 @@ export type ProductionRunCountAggregateOutputType = {
   state: number
   phase: number
   step: number
+  stepIndex: number
   quantity: number
   progress: number
   parameters: number
@@ -94,11 +99,13 @@ export type ProductionRunCountAggregateOutputType = {
 
 
 export type ProductionRunAvgAggregateInputType = {
+  stepIndex?: true
   quantity?: true
   progress?: true
 }
 
 export type ProductionRunSumAggregateInputType = {
+  stepIndex?: true
   quantity?: true
   progress?: true
 }
@@ -110,6 +117,7 @@ export type ProductionRunMinAggregateInputType = {
   state?: true
   phase?: true
   step?: true
+  stepIndex?: true
   quantity?: true
   progress?: true
   startedAt?: true
@@ -128,6 +136,7 @@ export type ProductionRunMaxAggregateInputType = {
   state?: true
   phase?: true
   step?: true
+  stepIndex?: true
   quantity?: true
   progress?: true
   startedAt?: true
@@ -146,6 +155,7 @@ export type ProductionRunCountAggregateInputType = {
   state?: true
   phase?: true
   step?: true
+  stepIndex?: true
   quantity?: true
   progress?: true
   parameters?: true
@@ -252,6 +262,7 @@ export type ProductionRunGroupByOutputType = {
   state: string | null
   phase: string | null
   step: string | null
+  stepIndex: number
   quantity: number | null
   progress: number
   parameters: runtime.JsonValue | null
@@ -294,6 +305,7 @@ export type ProductionRunWhereInput = {
   state?: Prisma.StringNullableFilter<"ProductionRun"> | string | null
   phase?: Prisma.StringNullableFilter<"ProductionRun"> | string | null
   step?: Prisma.StringNullableFilter<"ProductionRun"> | string | null
+  stepIndex?: Prisma.IntFilter<"ProductionRun"> | number
   quantity?: Prisma.FloatNullableFilter<"ProductionRun"> | number | null
   progress?: Prisma.FloatFilter<"ProductionRun"> | number
   parameters?: Prisma.JsonNullableFilter<"ProductionRun">
@@ -320,6 +332,7 @@ export type ProductionRunOrderByWithRelationInput = {
   state?: Prisma.SortOrderInput | Prisma.SortOrder
   phase?: Prisma.SortOrderInput | Prisma.SortOrder
   step?: Prisma.SortOrderInput | Prisma.SortOrder
+  stepIndex?: Prisma.SortOrder
   quantity?: Prisma.SortOrderInput | Prisma.SortOrder
   progress?: Prisma.SortOrder
   parameters?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -349,6 +362,7 @@ export type ProductionRunWhereUniqueInput = Prisma.AtLeast<{
   state?: Prisma.StringNullableFilter<"ProductionRun"> | string | null
   phase?: Prisma.StringNullableFilter<"ProductionRun"> | string | null
   step?: Prisma.StringNullableFilter<"ProductionRun"> | string | null
+  stepIndex?: Prisma.IntFilter<"ProductionRun"> | number
   quantity?: Prisma.FloatNullableFilter<"ProductionRun"> | number | null
   progress?: Prisma.FloatFilter<"ProductionRun"> | number
   parameters?: Prisma.JsonNullableFilter<"ProductionRun">
@@ -375,6 +389,7 @@ export type ProductionRunOrderByWithAggregationInput = {
   state?: Prisma.SortOrderInput | Prisma.SortOrder
   phase?: Prisma.SortOrderInput | Prisma.SortOrder
   step?: Prisma.SortOrderInput | Prisma.SortOrder
+  stepIndex?: Prisma.SortOrder
   quantity?: Prisma.SortOrderInput | Prisma.SortOrder
   progress?: Prisma.SortOrder
   parameters?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -402,6 +417,7 @@ export type ProductionRunScalarWhereWithAggregatesInput = {
   state?: Prisma.StringNullableWithAggregatesFilter<"ProductionRun"> | string | null
   phase?: Prisma.StringNullableWithAggregatesFilter<"ProductionRun"> | string | null
   step?: Prisma.StringNullableWithAggregatesFilter<"ProductionRun"> | string | null
+  stepIndex?: Prisma.IntWithAggregatesFilter<"ProductionRun"> | number
   quantity?: Prisma.FloatNullableWithAggregatesFilter<"ProductionRun"> | number | null
   progress?: Prisma.FloatWithAggregatesFilter<"ProductionRun"> | number
   parameters?: Prisma.JsonNullableWithAggregatesFilter<"ProductionRun">
@@ -421,6 +437,7 @@ export type ProductionRunCreateInput = {
   state?: string | null
   phase?: string | null
   step?: string | null
+  stepIndex?: number
   quantity?: number | null
   progress?: number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -444,6 +461,7 @@ export type ProductionRunUncheckedCreateInput = {
   state?: string | null
   phase?: string | null
   step?: string | null
+  stepIndex?: number
   quantity?: number | null
   progress?: number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -467,6 +485,7 @@ export type ProductionRunUpdateInput = {
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phase?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   step?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stepIndex?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   progress?: Prisma.FloatFieldUpdateOperationsInput | number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -490,6 +509,7 @@ export type ProductionRunUncheckedUpdateInput = {
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phase?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   step?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stepIndex?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   progress?: Prisma.FloatFieldUpdateOperationsInput | number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -513,6 +533,7 @@ export type ProductionRunCreateManyInput = {
   state?: string | null
   phase?: string | null
   step?: string | null
+  stepIndex?: number
   quantity?: number | null
   progress?: number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -532,6 +553,7 @@ export type ProductionRunUpdateManyMutationInput = {
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phase?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   step?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stepIndex?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   progress?: Prisma.FloatFieldUpdateOperationsInput | number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -548,6 +570,7 @@ export type ProductionRunUncheckedUpdateManyInput = {
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phase?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   step?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stepIndex?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   progress?: Prisma.FloatFieldUpdateOperationsInput | number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -577,6 +600,7 @@ export type ProductionRunCountOrderByAggregateInput = {
   state?: Prisma.SortOrder
   phase?: Prisma.SortOrder
   step?: Prisma.SortOrder
+  stepIndex?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
   progress?: Prisma.SortOrder
   parameters?: Prisma.SortOrder
@@ -590,6 +614,7 @@ export type ProductionRunCountOrderByAggregateInput = {
 }
 
 export type ProductionRunAvgOrderByAggregateInput = {
+  stepIndex?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
   progress?: Prisma.SortOrder
 }
@@ -601,6 +626,7 @@ export type ProductionRunMaxOrderByAggregateInput = {
   state?: Prisma.SortOrder
   phase?: Prisma.SortOrder
   step?: Prisma.SortOrder
+  stepIndex?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
   progress?: Prisma.SortOrder
   startedAt?: Prisma.SortOrder
@@ -619,6 +645,7 @@ export type ProductionRunMinOrderByAggregateInput = {
   state?: Prisma.SortOrder
   phase?: Prisma.SortOrder
   step?: Prisma.SortOrder
+  stepIndex?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
   progress?: Prisma.SortOrder
   startedAt?: Prisma.SortOrder
@@ -631,6 +658,7 @@ export type ProductionRunMinOrderByAggregateInput = {
 }
 
 export type ProductionRunSumOrderByAggregateInput = {
+  stepIndex?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
   progress?: Prisma.SortOrder
 }
@@ -836,6 +864,7 @@ export type ProductionRunCreateWithoutWorkCenterInput = {
   state?: string | null
   phase?: string | null
   step?: string | null
+  stepIndex?: number
   quantity?: number | null
   progress?: number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -858,6 +887,7 @@ export type ProductionRunUncheckedCreateWithoutWorkCenterInput = {
   state?: string | null
   phase?: string | null
   step?: string | null
+  stepIndex?: number
   quantity?: number | null
   progress?: number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -909,6 +939,7 @@ export type ProductionRunScalarWhereInput = {
   state?: Prisma.StringNullableFilter<"ProductionRun"> | string | null
   phase?: Prisma.StringNullableFilter<"ProductionRun"> | string | null
   step?: Prisma.StringNullableFilter<"ProductionRun"> | string | null
+  stepIndex?: Prisma.IntFilter<"ProductionRun"> | number
   quantity?: Prisma.FloatNullableFilter<"ProductionRun"> | number | null
   progress?: Prisma.FloatFilter<"ProductionRun"> | number
   parameters?: Prisma.JsonNullableFilter<"ProductionRun">
@@ -928,6 +959,7 @@ export type ProductionRunCreateWithoutRecipeInput = {
   state?: string | null
   phase?: string | null
   step?: string | null
+  stepIndex?: number
   quantity?: number | null
   progress?: number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -950,6 +982,7 @@ export type ProductionRunUncheckedCreateWithoutRecipeInput = {
   state?: string | null
   phase?: string | null
   step?: string | null
+  stepIndex?: number
   quantity?: number | null
   progress?: number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -998,6 +1031,7 @@ export type ProductionRunCreateWithoutOrderInput = {
   state?: string | null
   phase?: string | null
   step?: string | null
+  stepIndex?: number
   quantity?: number | null
   progress?: number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1020,6 +1054,7 @@ export type ProductionRunUncheckedCreateWithoutOrderInput = {
   state?: string | null
   phase?: string | null
   step?: string | null
+  stepIndex?: number
   quantity?: number | null
   progress?: number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1068,6 +1103,7 @@ export type ProductionRunCreateWithoutBatchUnitsInput = {
   state?: string | null
   phase?: string | null
   step?: string | null
+  stepIndex?: number
   quantity?: number | null
   progress?: number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1090,6 +1126,7 @@ export type ProductionRunUncheckedCreateWithoutBatchUnitsInput = {
   state?: string | null
   phase?: string | null
   step?: string | null
+  stepIndex?: number
   quantity?: number | null
   progress?: number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1128,6 +1165,7 @@ export type ProductionRunUpdateWithoutBatchUnitsInput = {
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phase?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   step?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stepIndex?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   progress?: Prisma.FloatFieldUpdateOperationsInput | number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1150,6 +1188,7 @@ export type ProductionRunUncheckedUpdateWithoutBatchUnitsInput = {
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phase?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   step?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stepIndex?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   progress?: Prisma.FloatFieldUpdateOperationsInput | number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1172,6 +1211,7 @@ export type ProductionRunCreateWithoutStateTransitionsInput = {
   state?: string | null
   phase?: string | null
   step?: string | null
+  stepIndex?: number
   quantity?: number | null
   progress?: number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1194,6 +1234,7 @@ export type ProductionRunUncheckedCreateWithoutStateTransitionsInput = {
   state?: string | null
   phase?: string | null
   step?: string | null
+  stepIndex?: number
   quantity?: number | null
   progress?: number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1232,6 +1273,7 @@ export type ProductionRunUpdateWithoutStateTransitionsInput = {
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phase?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   step?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stepIndex?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   progress?: Prisma.FloatFieldUpdateOperationsInput | number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1254,6 +1296,7 @@ export type ProductionRunUncheckedUpdateWithoutStateTransitionsInput = {
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phase?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   step?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stepIndex?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   progress?: Prisma.FloatFieldUpdateOperationsInput | number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1276,6 +1319,7 @@ export type ProductionRunCreateWithoutConsumptionsInput = {
   state?: string | null
   phase?: string | null
   step?: string | null
+  stepIndex?: number
   quantity?: number | null
   progress?: number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1298,6 +1342,7 @@ export type ProductionRunUncheckedCreateWithoutConsumptionsInput = {
   state?: string | null
   phase?: string | null
   step?: string | null
+  stepIndex?: number
   quantity?: number | null
   progress?: number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1336,6 +1381,7 @@ export type ProductionRunUpdateWithoutConsumptionsInput = {
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phase?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   step?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stepIndex?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   progress?: Prisma.FloatFieldUpdateOperationsInput | number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1358,6 +1404,7 @@ export type ProductionRunUncheckedUpdateWithoutConsumptionsInput = {
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phase?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   step?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stepIndex?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   progress?: Prisma.FloatFieldUpdateOperationsInput | number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1380,6 +1427,7 @@ export type ProductionRunCreateWithoutGenealogyInput = {
   state?: string | null
   phase?: string | null
   step?: string | null
+  stepIndex?: number
   quantity?: number | null
   progress?: number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1402,6 +1450,7 @@ export type ProductionRunUncheckedCreateWithoutGenealogyInput = {
   state?: string | null
   phase?: string | null
   step?: string | null
+  stepIndex?: number
   quantity?: number | null
   progress?: number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1440,6 +1489,7 @@ export type ProductionRunUpdateWithoutGenealogyInput = {
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phase?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   step?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stepIndex?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   progress?: Prisma.FloatFieldUpdateOperationsInput | number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1462,6 +1512,7 @@ export type ProductionRunUncheckedUpdateWithoutGenealogyInput = {
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phase?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   step?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stepIndex?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   progress?: Prisma.FloatFieldUpdateOperationsInput | number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1484,6 +1535,7 @@ export type ProductionRunCreateManyWorkCenterInput = {
   state?: string | null
   phase?: string | null
   step?: string | null
+  stepIndex?: number
   quantity?: number | null
   progress?: number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1502,6 +1554,7 @@ export type ProductionRunUpdateWithoutWorkCenterInput = {
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phase?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   step?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stepIndex?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   progress?: Prisma.FloatFieldUpdateOperationsInput | number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1524,6 +1577,7 @@ export type ProductionRunUncheckedUpdateWithoutWorkCenterInput = {
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phase?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   step?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stepIndex?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   progress?: Prisma.FloatFieldUpdateOperationsInput | number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1546,6 +1600,7 @@ export type ProductionRunUncheckedUpdateManyWithoutWorkCenterInput = {
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phase?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   step?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stepIndex?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   progress?: Prisma.FloatFieldUpdateOperationsInput | number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1564,6 +1619,7 @@ export type ProductionRunCreateManyRecipeInput = {
   state?: string | null
   phase?: string | null
   step?: string | null
+  stepIndex?: number
   quantity?: number | null
   progress?: number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1582,6 +1638,7 @@ export type ProductionRunUpdateWithoutRecipeInput = {
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phase?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   step?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stepIndex?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   progress?: Prisma.FloatFieldUpdateOperationsInput | number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1604,6 +1661,7 @@ export type ProductionRunUncheckedUpdateWithoutRecipeInput = {
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phase?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   step?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stepIndex?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   progress?: Prisma.FloatFieldUpdateOperationsInput | number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1626,6 +1684,7 @@ export type ProductionRunUncheckedUpdateManyWithoutRecipeInput = {
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phase?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   step?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stepIndex?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   progress?: Prisma.FloatFieldUpdateOperationsInput | number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1644,6 +1703,7 @@ export type ProductionRunCreateManyOrderInput = {
   state?: string | null
   phase?: string | null
   step?: string | null
+  stepIndex?: number
   quantity?: number | null
   progress?: number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1662,6 +1722,7 @@ export type ProductionRunUpdateWithoutOrderInput = {
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phase?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   step?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stepIndex?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   progress?: Prisma.FloatFieldUpdateOperationsInput | number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1684,6 +1745,7 @@ export type ProductionRunUncheckedUpdateWithoutOrderInput = {
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phase?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   step?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stepIndex?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   progress?: Prisma.FloatFieldUpdateOperationsInput | number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1706,6 +1768,7 @@ export type ProductionRunUncheckedUpdateManyWithoutOrderInput = {
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phase?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   step?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  stepIndex?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   progress?: Prisma.FloatFieldUpdateOperationsInput | number
   parameters?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -1782,6 +1845,7 @@ export type ProductionRunSelect<ExtArgs extends runtime.Types.Extensions.Interna
   state?: boolean
   phase?: boolean
   step?: boolean
+  stepIndex?: boolean
   quantity?: boolean
   progress?: boolean
   parameters?: boolean
@@ -1809,6 +1873,7 @@ export type ProductionRunSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   state?: boolean
   phase?: boolean
   step?: boolean
+  stepIndex?: boolean
   quantity?: boolean
   progress?: boolean
   parameters?: boolean
@@ -1831,6 +1896,7 @@ export type ProductionRunSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   state?: boolean
   phase?: boolean
   step?: boolean
+  stepIndex?: boolean
   quantity?: boolean
   progress?: boolean
   parameters?: boolean
@@ -1853,6 +1919,7 @@ export type ProductionRunSelectScalar = {
   state?: boolean
   phase?: boolean
   step?: boolean
+  stepIndex?: boolean
   quantity?: boolean
   progress?: boolean
   parameters?: boolean
@@ -1865,7 +1932,7 @@ export type ProductionRunSelectScalar = {
   recipeId?: boolean
 }
 
-export type ProductionRunOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "runNumber" | "status" | "state" | "phase" | "step" | "quantity" | "progress" | "parameters" | "startedAt" | "endedAt" | "createdAt" | "updatedAt" | "workCenterId" | "orderId" | "recipeId", ExtArgs["result"]["productionRun"]>
+export type ProductionRunOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "runNumber" | "status" | "state" | "phase" | "step" | "stepIndex" | "quantity" | "progress" | "parameters" | "startedAt" | "endedAt" | "createdAt" | "updatedAt" | "workCenterId" | "orderId" | "recipeId", ExtArgs["result"]["productionRun"]>
 export type ProductionRunInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   workCenter?: boolean | Prisma.WorkCenterDefaultArgs<ExtArgs>
   order?: boolean | Prisma.ProductionRun$orderArgs<ExtArgs>
@@ -1905,6 +1972,7 @@ export type $ProductionRunPayload<ExtArgs extends runtime.Types.Extensions.Inter
     state: string | null
     phase: string | null
     step: string | null
+    stepIndex: number
     quantity: number | null
     progress: number
     parameters: runtime.JsonValue | null
@@ -2351,6 +2419,7 @@ export interface ProductionRunFieldRefs {
   readonly state: Prisma.FieldRef<"ProductionRun", 'String'>
   readonly phase: Prisma.FieldRef<"ProductionRun", 'String'>
   readonly step: Prisma.FieldRef<"ProductionRun", 'String'>
+  readonly stepIndex: Prisma.FieldRef<"ProductionRun", 'Int'>
   readonly quantity: Prisma.FieldRef<"ProductionRun", 'Float'>
   readonly progress: Prisma.FieldRef<"ProductionRun", 'Float'>
   readonly parameters: Prisma.FieldRef<"ProductionRun", 'Json'>

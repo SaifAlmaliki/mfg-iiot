@@ -3997,6 +3997,7 @@ export const ProductionRunScalarFieldEnum = {
   state: 'state',
   phase: 'phase',
   step: 'step',
+  stepIndex: 'stepIndex',
   quantity: 'quantity',
   progress: 'progress',
   parameters: 'parameters',

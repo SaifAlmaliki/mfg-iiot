@@ -1,16 +1,19 @@
-/**
- * /api/batches – proxy to ProductionRun-based /api/runs.
- * The Batch model does not exist in the schema. Use GET/POST /api/runs instead.
- * This route proxies GET and POST for backward compatibility:
- * - GET: returns production runs (lineId treated as workCenterId)
- * - POST: creates a run (batchNumber -> runNumber, lineId -> workCenterId)
- */
-
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSession, hasPermission } from '@/lib/auth-config';
 import { PERMISSIONS } from '@/lib/permissions';
 
+const RUN_LIST_INCLUDE = {
+  recipe: { select: { id: true, name: true, version: true, status: true } },
+  order: { select: { id: true, orderNumber: true, status: true } },
+  workCenter: { select: { id: true, name: true, code: true } },
+  _count: { select: { stateTransitions: true } },
+} as const;
+
+/**
+ * GET /api/runs
+ * Query params: status, workCenterId, orderId, recipeId, limit, offset
+ */
 export async function GET(request: NextRequest) {
   try {
     const session = await getSession();
@@ -23,45 +26,40 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
-    const lineId = searchParams.get('lineId');
+    const workCenterId = searchParams.get('workCenterId');
     const orderId = searchParams.get('orderId');
+    const recipeId = searchParams.get('recipeId');
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '20', 10)));
+    const offset = Math.max(0, parseInt(searchParams.get('offset') ?? '0', 10));
 
     const where: Record<string, unknown> = {};
     if (status) where.status = status;
-    if (lineId) where.workCenterId = lineId;
+    if (workCenterId) where.workCenterId = workCenterId;
     if (orderId) where.orderId = orderId;
+    if (recipeId) where.recipeId = recipeId;
 
-    const runs = await db.productionRun.findMany({
-      where,
-      include: {
-        workCenter: { select: { name: true, code: true } },
-        order: { select: { orderNumber: true } },
-        recipe: { select: { name: true, version: true } },
-        batchUnits: {
-          include: {
-            workUnit: { select: { name: true, code: true, type: true } },
-          },
-        },
-        consumptions: {
-          include: {
-            lot: {
-              include: {
-                product: { select: { name: true, code: true } },
-              },
-            },
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    const [runs, total] = await Promise.all([
+      db.productionRun.findMany({
+        where,
+        include: RUN_LIST_INCLUDE,
+        orderBy: { updatedAt: 'desc' },
+        skip: offset,
+        take: limit,
+      }),
+      db.productionRun.count({ where }),
+    ]);
 
-    return NextResponse.json(runs);
+    return NextResponse.json({ data: runs, total, limit, offset });
   } catch (error) {
-    console.error('[API] GET /api/batches error:', error);
-    return NextResponse.json({ error: 'Failed to fetch batches' }, { status: 500 });
+    console.error('[API] GET /api/runs error:', error);
+    return NextResponse.json({ error: 'Failed to fetch runs' }, { status: 500 });
   }
 }
 
+/**
+ * POST /api/runs
+ * Body: runNumber, workCenterId, recipeId, orderId?, quantity?, parameters?
+ */
 export async function POST(request: NextRequest) {
   try {
     const session = await getSession();
@@ -73,22 +71,21 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { batchNumber, quantity, lineId, workCenterId, orderId, recipeId, parameters } = body;
+    const { runNumber, workCenterId, recipeId, orderId, quantity, parameters } = body;
 
-    const wcId = workCenterId || lineId;
-    if (!batchNumber || !wcId || !recipeId) {
+    if (!runNumber || !workCenterId || !recipeId) {
       return NextResponse.json(
-        { error: 'batchNumber (or runNumber), workCenterId (or lineId), and recipeId are required' },
+        { error: 'runNumber, workCenterId, and recipeId are required' },
         { status: 400 }
       );
     }
 
     const existing = await db.productionRun.findUnique({
-      where: { runNumber: String(batchNumber).trim() },
+      where: { runNumber: String(runNumber).trim() },
     });
     if (existing) {
       return NextResponse.json(
-        { error: 'A run with this batch/run number already exists' },
+        { error: 'A run with this run number already exists' },
         { status: 400 }
       );
     }
@@ -107,10 +104,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const workCenter = await db.workCenter.findUnique({
+      where: { id: workCenterId },
+      select: { id: true },
+    });
+    if (!workCenter) {
+      return NextResponse.json({ error: 'Work center not found' }, { status: 404 });
+    }
+
     const run = await db.productionRun.create({
       data: {
-        runNumber: String(batchNumber).trim(),
-        workCenterId: wcId,
+        runNumber: String(runNumber).trim(),
+        workCenterId,
         recipeId,
         orderId: orderId || null,
         quantity: quantity != null ? Number(quantity) : null,
@@ -120,16 +125,12 @@ export async function POST(request: NextRequest) {
         stepIndex: 0,
         progress: 0,
       },
-      include: {
-        workCenter: { select: { name: true, code: true } },
-        order: { select: { orderNumber: true } },
-        recipe: { select: { name: true, version: true } },
-      },
+      include: RUN_LIST_INCLUDE,
     });
 
     return NextResponse.json(run, { status: 201 });
   } catch (error) {
-    console.error('[API] POST /api/batches error:', error);
-    return NextResponse.json({ error: 'Failed to create batch' }, { status: 500 });
+    console.error('[API] POST /api/runs error:', error);
+    return NextResponse.json({ error: 'Failed to create run' }, { status: 500 });
   }
 }
