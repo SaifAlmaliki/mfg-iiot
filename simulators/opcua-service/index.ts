@@ -314,6 +314,7 @@ class OpcuaSimulatorService {
       this.isRunning = true;
       this.metrics.startTime = new Date();
       console.log(`[OPC UA] Server started on port ${this.config.port}`);
+      console.log(`[OPC UA] Endpoint URL: opc.tcp://localhost:${this.config.port}`);
       console.log(`[OPC UA] Server URI: ${this.config.serverUri}`);
       console.log(`[OPC UA] Anonymous access: ${this.config.allowAnonymous ? 'enabled' : 'disabled'}`);
 
