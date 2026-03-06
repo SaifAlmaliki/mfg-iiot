@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Cpu, Loader2, Copy, AlertCircle, RefreshCw } from 'lucide-react';
+import { Cpu, Loader2, Copy, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -76,10 +76,40 @@ function statusBadgeClassName(status: string): string {
   return 'bg-slate-600/30 text-slate-400 border-slate-600';
 }
 
+const TYPE_ORDER = ['modbus', 'opcua', 'energymeter'] as const;
+const TYPE_LABELS: Record<string, string> = {
+  modbus: 'Modbus TCP',
+  opcua: 'OPC UA',
+  energymeter: 'Energy Meter',
+};
+
+function groupByType(simulators: SimulatorEntry[]): { type: string; label: string; items: SimulatorEntry[] }[] {
+  const byType = new Map<string, SimulatorEntry[]>();
+  for (const sim of simulators) {
+    const t = (sim.type || '').toLowerCase();
+    if (!byType.has(t)) byType.set(t, []);
+    byType.get(t)!.push(sim);
+  }
+  const ordered: { type: string; label: string; items: SimulatorEntry[] }[] = TYPE_ORDER.filter((t) => byType.has(t)).map((type) => ({
+    type,
+    label: TYPE_LABELS[type] || type,
+    items: byType.get(type)!,
+  }));
+  // Include any other types not in TYPE_ORDER at the end
+  for (const [type] of byType) {
+    if ((TYPE_ORDER as readonly string[]).includes(type)) continue;
+    ordered.push({
+      type,
+      label: type,
+      items: byType.get(type)!,
+    });
+  }
+  return ordered;
+}
+
 export function SimulatorsPanel() {
   const [simulators, setSimulators] = useState<SimulatorEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchSimulators = (withLive = true) => {
@@ -110,13 +140,6 @@ export function SimulatorsPanel() {
     return () => clearInterval(interval);
   }, [simulators.length]);
 
-  const handleRefreshStatus = () => {
-    setRefreshing(true);
-    fetchSimulators(true)
-      .catch((e) => toast.error(e.message || 'Failed to refresh'))
-      .finally(() => setRefreshing(false));
-  };
-
   return (
     <div className="p-4 md:p-6 min-h-full bg-slate-950">
       <Card className="border-slate-600 bg-slate-800/80 shadow-lg">
@@ -128,18 +151,6 @@ export function SimulatorsPanel() {
           <CardDescription className="text-slate-300 text-base leading-relaxed mt-1">
             Status and connection details for Modbus, OPC UA, and Energy Meter simulators. Use <span className="text-slate-200">Local</span> when running on this machine; use <span className="text-slate-200">Docker</span> when services run in containers.
           </CardDescription>
-          <div className="mt-3 flex justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100"
-              onClick={handleRefreshStatus}
-              disabled={loading || refreshing}
-            >
-              {refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-              <span className="ml-2">Refresh status</span>
-            </Button>
-          </div>
         </CardHeader>
         <CardContent className="pt-6">
           {loading && (
@@ -167,43 +178,53 @@ export function SimulatorsPanel() {
                   <TableHead className="text-slate-200 font-semibold">Connection</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
-                {simulators.map((sim) => (
-                  <TableRow key={sim.id} className="border-slate-600/80 hover:bg-slate-700/50">
-                    <TableCell className="align-top">
-                      <div>
-                        <p className="font-medium text-slate-50">{sim.name}</p>
-                        {sim.description && (
-                          <p className="text-sm text-slate-400 mt-0.5 leading-snug">{sim.description}</p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="align-top">
-                      <Badge variant={typeBadgeVariant(sim.type)} className={cn('border', typeBadgeClassName(sim.type))}>
-                        {sim.type}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-slate-200 align-top tabular-nums">{sim.port}</TableCell>
-                    <TableCell className="align-top">
-                      <Badge variant="outline" className={cn('border', statusBadgeClassName(sim.status))}>
-                        {sim.status === 'running' ? 'Running' : sim.status === 'stopped' ? 'Stopped' : sim.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="align-top">
-                      <div className="flex flex-col gap-2">
-                        <ConnectionCell
-                          label="Local"
-                          value={sim.connection.endpointLocal ?? sim.connection.local}
-                        />
-                        <ConnectionCell
-                          label="Docker"
-                          value={sim.connection.endpointDocker ?? sim.connection.docker}
-                        />
-                      </div>
+              {groupByType(simulators).map(({ type, label, items }) => (
+                <TableBody key={type} className="border-b border-slate-600/80">
+                  <TableRow className="bg-slate-700/60 border-slate-600 hover:bg-slate-700/60">
+                    <TableCell colSpan={5} className="py-3 px-4">
+                      <span className="font-semibold text-slate-100">{label}</span>
+                      <span className="ml-2 text-slate-400 font-normal text-sm">
+                        ({items.length} {items.length === 1 ? 'simulator' : 'simulators'})
+                      </span>
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
+                  {items.map((sim) => (
+                    <TableRow key={sim.id} className="border-slate-600/80 hover:bg-slate-700/50">
+                      <TableCell className="align-top">
+                        <div>
+                          <p className="font-medium text-slate-50">{sim.name}</p>
+                          {sim.description && (
+                            <p className="text-sm text-slate-400 mt-0.5 leading-snug">{sim.description}</p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="align-top">
+                        <Badge variant={typeBadgeVariant(sim.type)} className={cn('border', typeBadgeClassName(sim.type))}>
+                          {sim.type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-slate-200 align-top tabular-nums">{sim.port}</TableCell>
+                      <TableCell className="align-top">
+                        <Badge variant="outline" className={cn('border', statusBadgeClassName(sim.status))}>
+                          {sim.status === 'running' ? 'Running' : sim.status === 'stopped' ? 'Stopped' : sim.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="align-top">
+                        <div className="flex flex-col gap-2">
+                          <ConnectionCell
+                            label="Local"
+                            value={sim.connection.endpointLocal ?? sim.connection.local}
+                          />
+                          <ConnectionCell
+                            label="Docker"
+                            value={sim.connection.endpointDocker ?? sim.connection.docker}
+                          />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              ))}
             </Table>
           )}
         </CardContent>

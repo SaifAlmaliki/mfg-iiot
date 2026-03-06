@@ -6,7 +6,8 @@
       "type": "modbus",
       "enabled": true,
       "port": 5020,
-      "description": "Boiler line 1 – pumps, valves, temperature and pressure control",
+      "description": "Production Line A – boiler line 1: pumps, valves, temperature and pressure control",
+      "productionLine": "A",
       "config": {
         "maxConnections": 50,
         "connectionTimeout": 30000,
@@ -216,7 +217,8 @@
       "type": "modbus",
       "enabled": true,
       "port": 5030,
-      "description": "Boiler line 2 – redundant line with similar signals",
+      "description": "Production Line B – boiler line 2: redundant line with similar signals",
+      "productionLine": "B",
       "config": {
         "maxConnections": 50,
         "connectionTimeout": 30000,
@@ -287,7 +289,8 @@
       "type": "modbus",
       "enabled": true,
       "port": 5040,
-      "description": "Packaging line conveyor and counters",
+      "description": "Production Line C – packaging line: conveyor and counters",
+      "productionLine": "C",
       "config": {
         "maxConnections": 50,
         "connectionTimeout": 30000,
@@ -365,14 +368,17 @@
       "type": "opcua",
       "enabled": true,
       "port": 4840,
-      "description": "Robot cell A and CNC machine 1 with Robotics and Machine Tools companion specs",
+      "description": "Production Line A – Robot 1 and CNC Machine 1 (Robotics and Machine Tools companion specs)",
+      "productionLine": "A",
       "config": {
-        "serverName": "Industrial Simulator OPC UA Server",
-        "serverUri": "urn:industrial-simulator:opcua:server",
+        "serverName": "Industrial Simulator OPC UA Server – Line A",
+        "serverUri": "urn:industrial-simulator:opcua:server:line-a",
         "productUri": "urn:industrial-simulator:opcua:product",
         "allowAnonymous": true,
         "securityMode": "None",
         "dynamicUpdateIntervalMs": 5000,
+        "robotId": "Robot1",
+        "machineId": "Machine1",
         "users": [
           {
             "username": "admin",
@@ -620,72 +626,16 @@
       "type": "opcua",
       "enabled": true,
       "port": 4850,
-      "description": "Second robot cell and CNC machine",
+      "description": "Production Line B – Robot 2 and CNC Machine 2 (Welding cell and CNC mill)",
+      "productionLine": "B",
       "config": {
-        "serverName": "Industrial Simulator OPC UA Server Cell B",
-        "serverUri": "urn:industrial-simulator:opcua:server:cell-b",
-        "productUri": "urn:industrial-simulator:opcua:product:cell-b",
+        "serverName": "Industrial Simulator OPC UA Server – Line B",
+        "serverUri": "urn:industrial-simulator:opcua:server:line-b",
+        "productUri": "urn:industrial-simulator:opcua:product",
         "allowAnonymous": true,
-        "securityMode": "None",
         "dynamicUpdateIntervalMs": 5000,
-        "users": [
-          {
-            "username": "admin",
-            "password": "admin123",
-            "role": "admin"
-          },
-          {
-            "username": "operator",
-            "password": "operator123",
-            "role": "operator"
-          }
-        ],
-        "namespaces": [
-          {
-            "uri": "http://opcfoundation.org/UA/Robotics/",
-            "name": "RoboticsB",
-            "nodes": [
-              {
-                "nodeId": "Robot2",
-                "browseName": "Robot2",
-                "displayName": "Robot 2",
-                "nodeClass": "Object",
-                "dataType": null
-              },
-              {
-                "nodeId": "Robot2.Status",
-                "browseName": "Status",
-                "displayName": "Robot Status",
-                "nodeClass": "Variable",
-                "dataType": "Int32",
-                "value": 1,
-                "description": "0=Offline, 1=Online, 2=Error, 3=Maintenance"
-              }
-            ]
-          },
-          {
-            "uri": "http://opcfoundation.org/UA/MachineTool/",
-            "name": "MachineToolB",
-            "nodes": [
-              {
-                "nodeId": "Machine2",
-                "browseName": "Machine2",
-                "displayName": "Machine 2",
-                "nodeClass": "Object",
-                "dataType": null
-              },
-              {
-                "nodeId": "Machine2.State",
-                "browseName": "State",
-                "displayName": "Machine State",
-                "nodeClass": "Variable",
-                "dataType": "Int32",
-                "value": 1,
-                "description": "0=Stopped, 1=Running, 2=Paused, 3=Error"
-              }
-            ]
-          }
-        ]
+        "robotId": "Robot2",
+        "machineId": "Machine2"
       },
       "status": "running"
     },
@@ -695,7 +645,8 @@
       "type": "energymeter",
       "enabled": true,
       "port": 5010,
-      "description": "Main LV switchboard with two three‑phase energy meters",
+      "description": "Production Line A – main LV switchboard with two three‑phase energy meters",
+      "productionLine": "A",
       "config": {
         "updateInterval": 5000,
         "meters": [
@@ -977,7 +928,8 @@
       "type": "energymeter",
       "enabled": true,
       "port": 5011,
-      "description": "Feeders for production hall lines",
+      "description": "Production Line B – feeders for production hall lines",
+      "productionLine": "B",
       "config": {
         "updateInterval": 5000,
         "meters": [
@@ -1095,7 +1047,8 @@
       "type": "energymeter",
       "enabled": true,
       "port": 5012,
-      "description": "Sub‑meters for HVAC, compressors, lighting",
+      "description": "Production Line C – sub‑meters for HVAC, compressors, lighting",
+      "productionLine": "C",
       "config": {
         "updateInterval": 5000,
         "meters": [

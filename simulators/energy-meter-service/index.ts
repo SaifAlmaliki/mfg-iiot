@@ -10,6 +10,8 @@
  * just enough to back the energymeter config.
  */
 
+import { readFileSync, existsSync } from 'fs';
+import { join } from 'path';
 import { createServer, type Server as TCPServer, type Socket } from 'net';
 
 interface MeasurementGenerator {
@@ -35,6 +37,28 @@ interface ServiceConfig {
   host: string;
   updateIntervalMs: number;
   meters: Meter[];
+}
+
+// JSON config entry from simulators.json
+interface SimulatorConfigEntry {
+  id?: string;
+  name?: string;
+  type?: string;
+  port?: number;
+  enabled?: boolean;
+  config?: {
+    updateInterval?: number;
+    meters?: Array<{
+      slaveId: number;
+      name: string;
+      measurements?: Array<{
+        name: string;
+        unit: string;
+        value: number;
+        generator?: { mode?: string; baseValue?: number; noise?: { type?: string; amplitude?: number } };
+      }>;
+    }>;
+  };
 }
 
 const DEFAULT_CONFIG: ServiceConfig = {
@@ -76,7 +100,7 @@ class EnergyMeterService {
   private config: ServiceConfig;
   private server: TCPServer | null = null;
   private sockets: Set<Socket> = new Set();
-  private updateTimer: Timer | null = null;
+  private updateTimer: ReturnType<typeof setInterval> | null = null;
   private isRunning = false;
 
   constructor(config: Partial<ServiceConfig> = {}) {
@@ -210,29 +234,88 @@ class EnergyMeterService {
   }
 }
 
-const service = new EnergyMeterService();
+function getSimulatorsConfigPath(): string {
+  const envPath = process.env.SIMULATORS_CONFIG_PATH;
+  if (envPath) return envPath;
+  const fromCwd = join(process.cwd(), 'simulators', 'simulators.json');
+  if (existsSync(fromCwd)) return fromCwd;
+  const fromParent = join(process.cwd(), '..', 'simulators.json');
+  if (existsSync(fromParent)) return fromParent;
+  return join(__dirname, '..', 'simulators.json');
+}
 
-process.on('SIGINT', async () => {
-  console.log('[EnergyMeter] Shutting down...');
-  await service.stop();
-  process.exit(0);
+function loadEnergyMeterEntries(): SimulatorConfigEntry[] {
+  const configPath = getSimulatorsConfigPath();
+  if (!existsSync(configPath)) return [];
+  try {
+    const data = JSON.parse(readFileSync(configPath, 'utf-8')) as { simulators?: SimulatorConfigEntry[] };
+    return data.simulators?.filter((s) => s.type === 'energymeter' && s.enabled !== false) ?? [];
+  } catch {
+    return [];
+  }
+}
+
+function mapEntryToServiceConfig(entry: SimulatorConfigEntry): ServiceConfig {
+  const port = Number(entry.port) || 5010;
+  const cfg = entry.config || {};
+  const updateIntervalMs = cfg.updateInterval ?? 5000;
+  const meters: Meter[] = (cfg.meters || []).map((m) => ({
+    slaveId: m.slaveId,
+    name: m.name,
+    measurements: (m.measurements || []).map((mm) => ({
+      name: mm.name,
+      unit: mm.unit,
+      value: mm.value,
+      generator:
+        mm.generator != null
+          ? {
+              baseValue: mm.generator.baseValue ?? mm.value,
+              noiseAmplitude: mm.generator.noise?.amplitude ?? 0,
+            }
+          : undefined,
+    })),
+  }));
+  return {
+    port,
+    host: '0.0.0.0',
+    updateIntervalMs,
+    meters: meters.length > 0 ? meters : DEFAULT_CONFIG.meters,
+  };
+}
+
+async function main(): Promise<void> {
+  const entries = loadEnergyMeterEntries();
+  const services: EnergyMeterService[] = [];
+
+  if (entries.length === 0) {
+    const service = new EnergyMeterService();
+    await service.start();
+    services.push(service);
+    console.log('[EnergyMeter] Service is ready (single server)');
+  } else {
+    for (const entry of entries) {
+      const config = mapEntryToServiceConfig(entry);
+      const service = new EnergyMeterService(config);
+      await service.start();
+      services.push(service);
+      console.log(`[EnergyMeter] Started ${entry.name || entry.id || config.port} on port ${config.port}`);
+    }
+    console.log(`[EnergyMeter] All ${services.length} Energy Meter server(s) are ready`);
+  }
+
+  const shutdown = async () => {
+    console.log('[EnergyMeter] Shutting down...');
+    for (const s of services) await s.stop();
+    process.exit(0);
+  };
+  process.on('SIGINT', () => { void shutdown(); });
+  process.on('SIGTERM', () => { void shutdown(); });
+}
+
+main().catch((err) => {
+  console.error('[EnergyMeter] Failed to start:', err);
+  process.exit(1);
 });
-
-process.on('SIGTERM', async () => {
-  console.log('[EnergyMeter] Shutting down...');
-  await service.stop();
-  process.exit(0);
-});
-
-service
-  .start()
-  .then(() => {
-    console.log('[EnergyMeter] Service is ready');
-  })
-  .catch((err) => {
-    console.error('[EnergyMeter] Failed to start:', err);
-    process.exit(1);
-  });
 
 export { EnergyMeterService, type ServiceConfig, type Meter };
 

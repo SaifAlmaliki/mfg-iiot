@@ -16,6 +16,7 @@
     "opc": "npm run --prefix simulators/opcua-service start:dev",
     "modbus": "npm run --prefix simulators/modbus-service start:dev",
     "energy": "npm run --prefix simulators/energy-meter-service start:dev",
+    "energz": "npm run energy",
     "build": "next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/",
     "start": "NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
     "lint": "eslint .",

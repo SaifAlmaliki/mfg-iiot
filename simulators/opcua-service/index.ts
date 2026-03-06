@@ -59,6 +59,10 @@ interface ServiceConfig {
   namespaces: NamespaceConfig[];
   /** Interval in ms for updating dynamic node values (default 5000). Can be overridden from config file. */
   dynamicUpdateIntervalMs?: number;
+  /** Robot asset ID for this server (e.g. Robot1, Robot2). Used to expose different assets per production line. */
+  robotId?: string;
+  /** Machine tool asset ID for this server (e.g. Machine1, Machine2). */
+  machineId?: string;
 }
 
 interface UserConfig {
@@ -252,13 +256,17 @@ class OpcuaSimulatorService {
   private metrics: ServiceMetrics;
   private isRunning = false;
   private dynamicNodes: Map<string, { node: any; config: GeneratorConfig; nodeConfig: NodeConfig }> = new Map();
-  private updateInterval: Timer | null = null;
+  private updateInterval: ReturnType<typeof setInterval> | null = null;
   private namespaceMap: Map<string, number> = new Map();
   /** Resolved update interval in ms (from config file or default). */
   private dynamicUpdateIntervalMs = 5000;
+  private robotId: string;
+  private machineId: string;
 
   constructor(config: Partial<ServiceConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
+    this.robotId = this.config.robotId ?? 'Robot1';
+    this.machineId = this.config.machineId ?? 'Machine1';
     this.metrics = {
       connections: 0,
       disconnections: 0,
@@ -354,6 +362,13 @@ class OpcuaSimulatorService {
     }
   }
 
+  /** Substitute asset IDs so each server can expose Robot2/Machine2 etc. for different production lines. */
+  private substituteAssetIds(s: string): string {
+    return s
+      .replace(/\bRobot1\b/g, this.robotId)
+      .replace(/\bMachine1\b/g, this.machineId);
+  }
+
   private buildAddressSpace(): void {
     if (!this.server) return;
 
@@ -375,17 +390,22 @@ class OpcuaSimulatorService {
         browseName: nsConfig.name,
       });
 
-      // Create nodes
+      // Create nodes (substitute robotId/machineId so each server can expose different assets)
       let currentParent: any = rootFolder;
       for (const nodeConfig of nsConfig.nodes) {
         try {
+          const nodeId = this.substituteAssetIds(nodeConfig.nodeId);
+          const browseName = this.substituteAssetIds(nodeConfig.browseName);
+          const displayName = this.substituteAssetIds(nodeConfig.displayName);
+          const description = nodeConfig.description ? this.substituteAssetIds(nodeConfig.description) : undefined;
+
           if (nodeConfig.dataType === DataType.ObjectType) {
             // Create an object folder
             const obj = namespace.addObject({
               organizedBy: currentParent,
-              browseName: nodeConfig.browseName,
-              displayName: nodeConfig.displayName,
-              description: nodeConfig.description,
+              browseName,
+              displayName,
+              description,
             });
             currentParent = obj;
           } else {
@@ -396,10 +416,10 @@ class OpcuaSimulatorService {
             // Create a variable (minimumSamplingInterval required when using getter/setter)
             const variable = namespace.addVariable({
               componentOf: currentParent,
-              nodeId: `s=${nodeConfig.nodeId}`,
-              browseName: nodeConfig.browseName,
-              displayName: nodeConfig.displayName,
-              description: nodeConfig.description,
+              nodeId: `s=${nodeId}`,
+              browseName,
+              displayName,
+              description,
               dataType: nodeConfig.dataType,
               value: {
                 get: () => {
@@ -419,9 +439,9 @@ class OpcuaSimulatorService {
               minimumSamplingInterval: 1000,
             });
 
-            // Register for dynamic updates
+            // Register for dynamic updates (key by substituted nodeId)
             if (nodeConfig.generator?.mode === 'dynamic') {
-              this.dynamicNodes.set(nodeConfig.nodeId, {
+              this.dynamicNodes.set(nodeId, {
                 node: variable,
                 config: nodeConfig.generator,
                 nodeConfig,
@@ -434,7 +454,7 @@ class OpcuaSimulatorService {
       }
     }
 
-    console.log(`[OPC UA] Address space built with ${this.dynamicNodes.size} dynamic nodes`);
+    console.log(`[OPC UA] Address space built with ${this.dynamicNodes.size} dynamic nodes (${this.robotId}, ${this.machineId})`);
   }
 
   private setupEventHandlers(): void {
@@ -553,35 +573,93 @@ class OpcuaSimulatorService {
   }
 }
 
-// Main entry point
-const service = new OpcuaSimulatorService({
-  port: parseInt(process.env.OPCUA_PORT || '4840'),
-});
+// Config entry from simulators.json
+interface SimulatorConfigEntry {
+  id?: string;
+  name?: string;
+  type?: string;
+  port?: number;
+  enabled?: boolean;
+  config?: Record<string, unknown>;
+}
 
-// Handle graceful shutdown
-process.on('SIGINT', async () => {
-  console.log('[OPC UA] Shutting down...');
-  await service.stop();
-  process.exit(0);
-});
+function getSimulatorsConfigPath(): string {
+  const envPath = process.env.SIMULATORS_CONFIG_PATH;
+  if (envPath) return envPath;
+  const fromCwd = join(process.cwd(), 'simulators', 'simulators.json');
+  if (existsSync(fromCwd)) return fromCwd;
+  const fromParent = join(process.cwd(), '..', 'simulators.json');
+  if (existsSync(fromParent)) return fromParent;
+  return join(__dirname, '..', 'simulators.json');
+}
 
-process.on('SIGTERM', async () => {
-  console.log('[OPC UA] Shutting down...');
-  await service.stop();
-  process.exit(0);
-});
+function loadOpcuaEntries(): SimulatorConfigEntry[] {
+  const configPath = getSimulatorsConfigPath();
+  if (!existsSync(configPath)) {
+    console.warn('[OPC UA] No simulators.json found at', configPath, '- using single server from OPCUA_PORT');
+    return [];
+  }
+  try {
+    const data = JSON.parse(readFileSync(configPath, 'utf-8')) as { simulators?: SimulatorConfigEntry[] };
+    const list = data.simulators?.filter((s) => s.type === 'opcua' && s.enabled !== false) ?? [];
+    return list;
+  } catch (err) {
+    console.warn('[OPC UA] Failed to load simulators.json:', (err as Error).message, '- using single server');
+    return [];
+  }
+}
 
-// Start the service
-service.start().then(() => {
-  console.log('[OPC UA] Service is ready');
-  console.log('[OPC UA] Namespaces:', service.getNamespaces().map(n => n.name).join(', '));
+// Main entry point: start all OPC UA servers from config, or single server from env
+async function main(): Promise<void> {
+  const entries = loadOpcuaEntries();
+  const services: OpcuaSimulatorService[] = [];
+
+  if (entries.length === 0) {
+    const port = parseInt(process.env.OPCUA_PORT || '4840', 10);
+    const service = new OpcuaSimulatorService({ port });
+    await service.start();
+    services.push(service);
+    console.log('[OPC UA] Service is ready (single server)');
+    console.log(`[OPC UA] Endpoint URL: opc.tcp://localhost:${port}`);
+  } else {
+    for (const entry of entries) {
+      const port = Number(entry.port) || 4840;
+      const config = (entry.config || {}) as Partial<ServiceConfig>;
+      const service = new OpcuaSimulatorService({
+        port,
+        serverName: (config.serverName as string) || entry.name || `OPC UA Server ${port}`,
+        serverUri: (config.serverUri as string) || `urn:industrial-simulator:opcua:server:${port}`,
+        productUri: (config.productUri as string) || 'urn:industrial-simulator:opcua:product',
+        allowAnonymous: config.allowAnonymous !== false,
+        dynamicUpdateIntervalMs: config.dynamicUpdateIntervalMs,
+        robotId: (config.robotId as string) || 'Robot1',
+        machineId: (config.machineId as string) || 'Machine1',
+      });
+      await service.start();
+      services.push(service);
+      console.log(`[OPC UA] Started ${entry.name || entry.id || port} on port ${port}`);
+    }
+    console.log(`[OPC UA] All ${services.length} OPC UA server(s) are ready`);
+  }
+
+  const shutdown = async () => {
+    console.log('[OPC UA] Shutting down...');
+    for (const s of services) await s.stop();
+    process.exit(0);
+  };
+  process.on('SIGINT', () => { void shutdown(); });
+  process.on('SIGTERM', () => { void shutdown(); });
 
   // Periodic status logging
   setInterval(() => {
-    const status = service.getStatus();
-    console.log(`[OPC UA] Status: ${status.isRunning ? 'Running' : 'Stopped'}, Reads: ${status.metrics.readOperations}, Writes: ${status.metrics.writeOperations}`);
+    for (let i = 0; i < services.length; i++) {
+      const status = services[i].getStatus();
+      console.log(`[OPC UA] Server ${i + 1}: ${status.isRunning ? 'Running' : 'Stopped'}, Reads: ${status.metrics.readOperations}, Writes: ${status.metrics.writeOperations}`);
+    }
   }, 300000);
-}).catch((error) => {
+}
+
+main().catch((error) => {
   console.error('[OPC UA] Failed to start:', error);
   process.exit(1);
 });

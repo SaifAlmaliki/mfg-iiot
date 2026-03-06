@@ -8,6 +8,8 @@
  * - Real-time data via IPC to main orchestrator
  */
 
+import { readFileSync, existsSync } from 'fs';
+import { join } from 'path';
 import { createServer, type Server as TCPServer, type Socket } from 'net';
 import * as modbus from 'jsmodbus';
 
@@ -73,6 +75,30 @@ interface RegisterConfig {
   generator?: GeneratorConfig;
 }
 
+// JSON config entry from simulators.json
+interface SimulatorConfigEntry {
+  id?: string;
+  name?: string;
+  type?: string;
+  port?: number;
+  enabled?: boolean;
+  config?: {
+    maxConnections?: number;
+    connectionTimeout?: number;
+    slaves?: Array<{
+      slaveId: number;
+      name: string;
+      enabled?: boolean;
+      registers?: {
+        coils?: Array<{ address: number; name: string; value: boolean; description?: string }>;
+        discreteInputs?: Array<{ address: number; name: string; value: boolean; description?: string }>;
+        holdingRegisters?: Array<{ address: number; name: string; value: number; dataType?: string; description?: string; generator?: GeneratorConfig }>;
+        inputRegisters?: Array<{ address: number; name: string; value: number; dataType?: string; description?: string; generator?: GeneratorConfig }>;
+      };
+    }>;
+  };
+}
+
 // Metrics
 interface ServiceMetrics {
   connections: number;
@@ -131,7 +157,7 @@ class ModbusSimulatorService {
   private slaves: Map<number, Slave> = new Map();
   private metrics: ServiceMetrics;
   private connections: Set<Socket> = new Set();
-  private updateInterval: Timer | null = null;
+  private updateInterval: ReturnType<typeof setInterval> | null = null;
   private isRunning = false;
 
   constructor(config: Partial<ServiceConfig> = {}) {
@@ -194,7 +220,7 @@ class ModbusSimulatorService {
         this.modbusServer = new modbus.server.TCP(server, {
           holding: this.createHoldingBuffer(),
           input: this.createInputBuffer(),
-          coil: this.createCoilBuffer(),
+          coils: this.createCoilBuffer(),
           discrete: this.createDiscreteBuffer(),
         });
 
@@ -487,34 +513,112 @@ class ModbusSimulatorService {
   }
 }
 
-// Main entry point
-const service = new ModbusSimulatorService({
-  port: parseInt(process.env.MODBUS_PORT || '5020'),
-});
+function getSimulatorsConfigPath(): string {
+  const envPath = process.env.SIMULATORS_CONFIG_PATH;
+  if (envPath) return envPath;
+  const fromCwd = join(process.cwd(), 'simulators', 'simulators.json');
+  if (existsSync(fromCwd)) return fromCwd;
+  const fromParent = join(process.cwd(), '..', 'simulators.json');
+  if (existsSync(fromParent)) return fromParent;
+  return join(__dirname, '..', 'simulators.json');
+}
 
-// Handle graceful shutdown
-process.on('SIGINT', async () => {
-  console.log('[Modbus] Shutting down...');
-  await service.stop();
-  process.exit(0);
-});
+function loadModbusEntries(): SimulatorConfigEntry[] {
+  const configPath = getSimulatorsConfigPath();
+  if (!existsSync(configPath)) return [];
+  try {
+    const data = JSON.parse(readFileSync(configPath, 'utf-8')) as { simulators?: SimulatorConfigEntry[] };
+    return data.simulators?.filter((s) => s.type === 'modbus' && s.enabled !== false) ?? [];
+  } catch {
+    return [];
+  }
+}
 
-process.on('SIGTERM', async () => {
-  console.log('[Modbus] Shutting down...');
-  await service.stop();
-  process.exit(0);
-});
+function mapEntryToServiceConfig(entry: SimulatorConfigEntry): ServiceConfig {
+  const port = Number(entry.port) || 5020;
+  const cfg = entry.config || {};
+  const slaves: SlaveConfig[] = (cfg.slaves || []).map((s) => {
+    const regs = s.registers || {};
+    return {
+      slaveId: s.slaveId,
+      name: s.name,
+      enabled: s.enabled !== false,
+      coils: (regs.coils || []).map((r) => ({
+        address: r.address,
+        value: r.value ? 1 : 0,
+        name: r.name,
+        dataType: 'bool',
+      })),
+      discreteInputs: (regs.discreteInputs || []).map((r) => ({
+        address: r.address,
+        value: r.value ? 1 : 0,
+        name: r.name,
+        dataType: 'bool',
+      })),
+      holdingRegisters: (regs.holdingRegisters || []).map((r) => ({
+        address: r.address,
+        value: r.value,
+        name: r.name,
+        dataType: r.dataType || 'int16',
+        generator: r.generator,
+      })),
+      inputRegisters: (regs.inputRegisters || []).map((r) => ({
+        address: r.address,
+        value: r.value,
+        name: r.name,
+        dataType: r.dataType || 'int16',
+        generator: r.generator,
+      })),
+    };
+  });
+  return {
+    port,
+    host: '0.0.0.0',
+    maxConnections: cfg.maxConnections ?? 50,
+    connectionTimeout: cfg.connectionTimeout ?? 30000,
+    slaves: slaves.length > 0 ? slaves : DEFAULT_CONFIG.slaves,
+  };
+}
 
-// Start the service
-service.start().then(() => {
-  console.log('[Modbus] Service is ready');
-  
-  // Periodic status logging
+async function main(): Promise<void> {
+  const entries = loadModbusEntries();
+  const services: ModbusSimulatorService[] = [];
+
+  if (entries.length === 0) {
+    const service = new ModbusSimulatorService({
+      port: parseInt(process.env.MODBUS_PORT || '5020', 10),
+    });
+    await service.start();
+    services.push(service);
+    console.log('[Modbus] Service is ready (single server)');
+  } else {
+    for (const entry of entries) {
+      const config = mapEntryToServiceConfig(entry);
+      const service = new ModbusSimulatorService(config);
+      await service.start();
+      services.push(service);
+      console.log(`[Modbus] Started ${entry.name || entry.id || config.port} on port ${config.port}`);
+    }
+    console.log(`[Modbus] All ${services.length} Modbus server(s) are ready`);
+  }
+
+  const shutdown = async () => {
+    console.log('[Modbus] Shutting down...');
+    for (const s of services) await s.stop();
+    process.exit(0);
+  };
+  process.on('SIGINT', () => { void shutdown(); });
+  process.on('SIGTERM', () => { void shutdown(); });
+
   setInterval(() => {
-    const status = service.getStatus();
-    console.log(`[Modbus] Status: ${status.isRunning ? 'Running' : 'Stopped'}, Connections: ${status.connectionCount}, Reads: ${status.metrics.readOperations}, Writes: ${status.metrics.writeOperations}`);
+    for (let i = 0; i < services.length; i++) {
+      const status = services[i].getStatus();
+      console.log(`[Modbus] Server ${i + 1}: ${status.isRunning ? 'Running' : 'Stopped'}, Connections: ${status.connectionCount}, Reads: ${status.metrics.readOperations}, Writes: ${status.metrics.writeOperations}`);
+    }
   }, 30000);
-}).catch((error) => {
+}
+
+main().catch((error) => {
   console.error('[Modbus] Failed to start:', error);
   process.exit(1);
 });
