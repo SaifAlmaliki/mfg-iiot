@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Network, CheckCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Loader2, Network, CheckCircle, Search } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -48,15 +49,17 @@ export function OpcuaBrowseDialog({
   open,
   onClose,
   endpoint,
-  siteId,
-  enterpriseCode,
-  siteCode,
+  siteId: _siteId,
+  enterpriseCode: _enterpriseCode,
+  siteCode: _siteCode,
   onSelectNodes,
 }: OpcuaBrowseDialogProps) {
   const [loading, setLoading] = useState(false);
   const [nodes, setNodes] = useState<BrowseNodeResult[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [hideSystemNodes, setHideSystemNodes] = useState(true);
 
   useEffect(() => {
     if (!open || !endpoint.trim()) return;
@@ -73,7 +76,7 @@ export function OpcuaBrowseDialog({
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000);
+    const timeoutId = setTimeout(() => controller.abort(), 45000);
 
     fetch('/api/opcua/browse', {
       method: 'POST',
@@ -92,7 +95,7 @@ export function OpcuaBrowseDialog({
       })
       .catch((err) => {
         if (err.name === 'AbortError') {
-          setError('Browse timed out. Check that the OPC UA server is running and the endpoint is correct (e.g. opc.tcp://localhost:4840).');
+          setError('Browse timed out (45s). Check that the OPC UA server is running at the endpoint (e.g. opc.tcp://localhost:4840). Try Test first.');
         } else {
           setError(err.message || 'Failed to browse');
         }
@@ -112,11 +115,26 @@ export function OpcuaBrowseDialog({
     });
   };
 
+  const applicationNodes = useMemo(() => {
+    return hideSystemNodes ? nodes.filter((n) => !n.nodeId.startsWith('ns=0;')) : nodes;
+  }, [nodes, hideSystemNodes]);
+
+  const filteredNodes = useMemo(() => {
+    if (!searchQuery.trim()) return applicationNodes;
+    const q = searchQuery.trim().toLowerCase();
+    return applicationNodes.filter(
+      (n) =>
+        n.nodeId.toLowerCase().includes(q) ||
+        (n.displayName || '').toLowerCase().includes(q) ||
+        (n.browseName || '').toLowerCase().includes(q)
+    );
+  }, [applicationNodes, searchQuery]);
+
   const selectAll = () => {
-    if (selected.size === nodes.length) {
+    if (selected.size === filteredNodes.length) {
       setSelected(new Set());
     } else {
-      setSelected(new Set(nodes.map((n) => n.nodeId)));
+      setSelected(new Set(filteredNodes.map((n) => n.nodeId)));
     }
   };
 
@@ -128,8 +146,8 @@ export function OpcuaBrowseDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden p-6">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Network className="w-5 h-5 text-blue-500" />
             Browse OPC UA Server
@@ -140,28 +158,48 @@ export function OpcuaBrowseDialog({
         </DialogHeader>
 
         {loading && (
-          <div className="flex items-center justify-center py-12">
+          <div className="flex items-center justify-center py-12 flex-shrink-0">
             <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
           </div>
         )}
 
         {error && (
-          <div className="rounded-md bg-destructive/10 text-destructive px-4 py-3 text-sm">
+          <div className="rounded-md bg-destructive/10 text-destructive px-4 py-3 text-sm flex-shrink-0">
             {error}
           </div>
         )}
 
         {!loading && !error && nodes.length > 0 && (
           <>
-            <div className="flex items-center justify-between">
-              <Button variant="outline" size="sm" onClick={selectAll}>
-                {selected.size === nodes.length ? 'Deselect all' : 'Select all'}
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                {nodes.length} variable(s) · {selected.size} selected
-              </span>
+            <div className="flex flex-col gap-2 flex-shrink-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="relative flex-1 min-w-[200px]">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by Node ID or name (e.g. Robot, Machine, Load)"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-8"
+                  />
+                </div>
+                <label className="flex items-center gap-2 text-sm text-muted-foreground whitespace-nowrap">
+                  <Checkbox
+                    checked={hideSystemNodes}
+                    onCheckedChange={(v) => setHideSystemNodes(v === true)}
+                  />
+                  Hide system nodes (ns=0)
+                </label>
+              </div>
+              <div className="flex items-center justify-between">
+                <Button variant="outline" size="sm" onClick={selectAll}>
+                  {selected.size === filteredNodes.length && filteredNodes.length > 0 ? 'Deselect all' : 'Select all'}
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  {filteredNodes.length} of {applicationNodes.length} variable(s) · {selected.size} selected
+                </span>
+              </div>
             </div>
-            <ScrollArea className="flex-1 min-h-[280px] rounded-md border">
+            <ScrollArea className="flex-1 min-h-0 rounded-md border mt-2" style={{ maxHeight: 'min(400px, 50vh)' }}>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -173,7 +211,7 @@ export function OpcuaBrowseDialog({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {nodes.map((node) => (
+                  {filteredNodes.map((node) => (
                     <TableRow
                       key={node.nodeId}
                       className={selected.has(node.nodeId) ? 'bg-primary/5' : ''}
@@ -199,16 +237,21 @@ export function OpcuaBrowseDialog({
                 </TableBody>
               </Table>
             </ScrollArea>
+            {filteredNodes.length === 0 && (
+              <p className="text-sm text-muted-foreground flex-shrink-0 mt-2">
+                No variables match the search. Try a different term or turn off &quot;Hide system nodes&quot;.
+              </p>
+            )}
           </>
         )}
 
         {!loading && !error && nodes.length === 0 && (
-          <div className="py-12 text-center text-muted-foreground text-sm">
+          <div className="py-12 text-center text-muted-foreground text-sm flex-shrink-0">
             No variables found. Ensure the server is running and the endpoint is correct.
           </div>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0">
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>

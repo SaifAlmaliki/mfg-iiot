@@ -45,7 +45,13 @@ export async function POST(request: NextRequest) {
     }
 
     if (variablesOnly) {
-      const nodes = await browseOpcuaVariablesFlat(trimmed, { config });
+      const BROWSE_TIMEOUT_MS = 35000;
+      const nodes = await Promise.race([
+        browseOpcuaVariablesFlat(trimmed, { config, maxDepth: 5 }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Browse timed out (35s). Server may have many nodes; add mappings manually using Node IDs from UA Expert (e.g. ns=1;s=Robot1.Load).')), BROWSE_TIMEOUT_MS)
+        ),
+      ]);
       return NextResponse.json({
         success: true,
         endpoint: trimmed,

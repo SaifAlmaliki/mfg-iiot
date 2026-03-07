@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   LayoutDashboard,
   Factory,
@@ -14,7 +14,6 @@ import {
   ChevronDown,
   ChevronRight,
   Menu,
-  X,
   Bell,
   User,
   LogOut,

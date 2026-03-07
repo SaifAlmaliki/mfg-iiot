@@ -24,7 +24,6 @@ import {
 } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import {
   Collapsible,
   CollapsibleContent,
@@ -42,19 +41,16 @@ import {
   Trash2,
   Loader2,
   Download,
-  Upload,
   RefreshCw,
-  Building,
-  Warehouse,
   Layers,
   Activity,
-  Eye,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { SetupWizard } from './setup-wizard';
 
 // Types
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- used in recursive type
 interface HierarchyNode {
   id: string;
   name: string;
@@ -367,7 +363,7 @@ export function HierarchyPanel() {
       a.click();
       window.URL.revokeObjectURL(url);
       toast.success('Hierarchy exported successfully');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to export hierarchy');
     }
   };
@@ -377,7 +373,7 @@ export function HierarchyPanel() {
     node: any,
     level: string,
     icon: React.ReactNode,
-    parentId?: string
+    _parentId?: string
   ) => {
     const hasChildren = node.children && node.children.length > 0;
     const isExpanded = expandedNodes.has(node.id);

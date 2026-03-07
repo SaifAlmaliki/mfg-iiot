@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth-config';
-import { getSimulatorsConfigPath, createTagMappingGenerator } from '@/lib/tag-mapping-generator';
 
 export async function GET(request: NextRequest) {
   try {

@@ -278,50 +278,50 @@ class ModbusSimulatorService {
     if (!this.modbusServer) return;
 
     // Handle read operations
-    this.modbusServer.on('readCoils', (request: any, response: any) => {
+    this.modbusServer.on('readCoils', (_request: any, _response: any) => {
       const startTime = Date.now();
       this.metrics.readOperations++;
       this.updateLatency(Date.now() - startTime);
     });
 
-    this.modbusServer.on('readHoldingRegisters', (request: any, response: any) => {
+    this.modbusServer.on('readHoldingRegisters', (_request: any, _response: any) => {
       const startTime = Date.now();
       this.metrics.readOperations++;
       this.updateLatency(Date.now() - startTime);
     });
 
-    this.modbusServer.on('readInputRegisters', (request: any, response: any) => {
+    this.modbusServer.on('readInputRegisters', (_request: any, _response: any) => {
       const startTime = Date.now();
       this.metrics.readOperations++;
       this.updateLatency(Date.now() - startTime);
     });
 
-    this.modbusServer.on('readDiscreteInputs', (request: any, response: any) => {
+    this.modbusServer.on('readDiscreteInputs', (_request: any, _response: any) => {
       const startTime = Date.now();
       this.metrics.readOperations++;
       this.updateLatency(Date.now() - startTime);
     });
 
     // Handle write operations
-    this.modbusServer.on('writeSingleCoil', (request: any, response: any) => {
+    this.modbusServer.on('writeSingleCoil', (_request: any, _response: any) => {
       const startTime = Date.now();
       this.metrics.writeOperations++;
       this.updateLatency(Date.now() - startTime);
     });
 
-    this.modbusServer.on('writeSingleRegister', (request: any, response: any) => {
+    this.modbusServer.on('writeSingleRegister', (_request: any, _response: any) => {
       const startTime = Date.now();
       this.metrics.writeOperations++;
       this.updateLatency(Date.now() - startTime);
     });
 
-    this.modbusServer.on('writeMultipleCoils', (request: any, response: any) => {
+    this.modbusServer.on('writeMultipleCoils', (_request: any, _response: any) => {
       const startTime = Date.now();
       this.metrics.writeOperations++;
       this.updateLatency(Date.now() - startTime);
     });
 
-    this.modbusServer.on('writeMultipleRegisters', (request: any, response: any) => {
+    this.modbusServer.on('writeMultipleRegisters', (_request: any, _response: any) => {
       const startTime = Date.now();
       this.metrics.writeOperations++;
       this.updateLatency(Date.now() - startTime);
@@ -362,9 +362,9 @@ class ModbusSimulatorService {
   }
 
   private updateDynamicValues(): void {
-    for (const [slaveId, slave] of this.slaves) {
+    for (const [_slaveId, slave] of this.slaves) {
       // Update input registers with dynamic values
-      for (const [address, register] of slave.inputRegisters) {
+      for (const [_address, register] of slave.inputRegisters) {
         if (register.generator?.mode === 'dynamic') {
           const newValue = this.generateDynamicValue(register.generator, register.value);
           register.value = newValue;
@@ -372,7 +372,7 @@ class ModbusSimulatorService {
       }
 
       // Update holding registers with dynamic values
-      for (const [address, register] of slave.holdingRegisters) {
+      for (const [_address, register] of slave.holdingRegisters) {
         if (register.generator?.mode === 'dynamic') {
           const newValue = this.generateDynamicValue(register.generator, register.value);
           register.value = newValue;
@@ -381,7 +381,7 @@ class ModbusSimulatorService {
     }
   }
 
-  private generateDynamicValue(config: GeneratorConfig, currentValue: number): number {
+  private generateDynamicValue(config: GeneratorConfig, _currentValue: number): number {
     let value = config.baseValue;
 
     // Apply noise

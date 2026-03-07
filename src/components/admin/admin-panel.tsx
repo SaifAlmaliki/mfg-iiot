@@ -32,29 +32,17 @@ import {
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
 import {
   Users,
   User,
-  Shield,
   FileText,
   Plus,
   Edit,
   Trash2,
-  Key,
   Clock,
-  CheckCircle,
-  XCircle,
   ChevronDown,
   ChevronRight,
   Loader2,
-  Search,
   Filter,
   Activity,
   AlertTriangle,
@@ -144,8 +132,8 @@ const permissionCategories = [
   },
 ];
 
-// All permissions flattened
-const allPermissions = permissionCategories.flatMap(c => c.permissions);
+// All permissions flattened (for future use in role editor)
+const _allPermissions = permissionCategories.flatMap(c => c.permissions);
 
 export function AdminPanel() {
   const currentModule = useNavigationStore((s) => s.currentModule);

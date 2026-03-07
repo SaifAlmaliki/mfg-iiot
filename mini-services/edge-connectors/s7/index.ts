@@ -88,7 +88,7 @@ async function handleMQTTMessage(topic: string, payload: Buffer) {
         await writeS7Address(mapping.sourceAddress, message.value);
         console.log(`[S7] Wrote ${message.value} to ${mapping.sourceAddress}`);
       } catch (_error) {
-        console.error(`[S7] Write error:`, error);
+        console.error(`[S7] Write error:`, _error);
       }
     }
   }
@@ -353,7 +353,7 @@ async function updateConnectorStatus(status: string) {
       },
     });
   } catch (_error) {
-    console.error('[DB] Failed to update status:', error);
+    console.error('[DB] Failed to update status:', _error);
   }
 }
 

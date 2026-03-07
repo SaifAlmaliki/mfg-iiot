@@ -47,8 +47,8 @@ import {
   Edit,
   Trash2,
   Loader2,
-  Play,
   Zap,
+  Plug,
   ArrowRightLeft,
   BarChart3,
   Timer,
@@ -1029,7 +1029,7 @@ export function EdgePanel() {
                         fetchConnectors();
                         fetchMappings();
                       }
-                    } catch (error) {
+                    } catch (_error) {
                       toast.error('Failed to approve mappings');
                     } finally {
                       setReviewLoading(false);
@@ -1054,7 +1054,7 @@ export function EdgePanel() {
                       if (res.ok) {
                         toast.success('Mappings saved for later review');
                       }
-                    } catch (error) {
+                    } catch (_error) {
                       toast.error('Failed to save mappings');
                     } finally {
                       setReviewLoading(false);
@@ -1306,57 +1306,46 @@ export function EdgePanel() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="connectorEndpoint">Endpoint *</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="connectorEndpoint"
-                    value={connectorForm.endpoint}
-                    onChange={(e) => setConnectorForm({ ...connectorForm, endpoint: e.target.value })}
-                    className={connectorFormErrors.endpoint ? 'border-destructive' : ''}
-                    placeholder="opc.tcp://192.168.1.10:4840"
-                  />
-                  {connectorForm.type === 'OPC_UA' && (
-                    <>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setConnectorForm((f) => ({ ...f, endpoint: 'opc.tcp://localhost:4840' }))}
-                        title="Use local OPC UA server (e.g. simulator)"
-                      >
-                        Local
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleTestEndpoint}
-                        disabled={testingEndpoint || !connectorForm.endpoint.trim()}
-                        title="Test connection before saving"
-                      >
-                        {testingEndpoint ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Test endpoint'}
-                      </Button>
-                    </>
-                  )}
-                  {connectorForm.type === 'MODBUS_TCP' && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setConnectorForm((f) => ({ ...f, endpoint: 'localhost:5020' }))}
-                      title="Use local Modbus TCP (e.g. simulator)"
-                    >
-                      Local
-                    </Button>
-                  )}
-                </div>
-                {connectorFormErrors.endpoint && (
-                  <p className="text-sm text-destructive">{connectorFormErrors.endpoint}</p>
+            <div className="space-y-2">
+              <Label htmlFor="connectorEndpoint">Endpoint *</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="connectorEndpoint"
+                  value={connectorForm.endpoint}
+                  onChange={(e) => setConnectorForm({ ...connectorForm, endpoint: e.target.value })}
+                  className={`flex-1 min-w-0 ${connectorFormErrors.endpoint ? 'border-destructive' : ''}`}
+                  placeholder="opc.tcp://localhost:4840 or opc.tcp://host:port/path"
+                />
+                {connectorForm.type === 'OPC_UA' && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={handleTestEndpoint}
+                    disabled={testingEndpoint || !connectorForm.endpoint.trim()}
+                    title="Test connection before saving"
+                  >
+                    {testingEndpoint ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plug className="w-4 h-4" />}
+                  </Button>
+                )}
+                {connectorForm.type === 'MODBUS_TCP' && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setConnectorForm((f) => ({ ...f, endpoint: 'localhost:5020' }))}
+                    title="Use local Modbus TCP (e.g. simulator)"
+                  >
+                    <Wifi className="w-4 h-4" />
+                  </Button>
                 )}
               </div>
-              
+              {connectorFormErrors.endpoint && (
+                <p className="text-sm text-destructive">{connectorFormErrors.endpoint}</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="connectorSite">Site *</Label>
                 <Select
@@ -1420,9 +1409,9 @@ export function EdgePanel() {
 
             {connectorForm.type === 'OPC_UA' && (
               <div className="space-y-3 rounded-lg border p-4 bg-muted/30">
-                <p className="text-sm font-medium">Add a tag mapping (optional)</p>
+                <p className="text-sm font-medium">Manual tag mapping (optional)</p>
                 <p className="text-xs text-muted-foreground">
-                  Add at least one mapping so the connector gateway can connect and stream data. You can also use Browse after saving.
+                  Enter a Node ID and select a Tag below. To pick variables from the server instead, save the connector and use the <strong>Browse</strong> button (magnifying glass) on the connector row.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -1431,7 +1420,7 @@ export function EdgePanel() {
                       id="inlineMappingSource"
                       value={connectorFormInlineMapping.sourceAddress}
                       onChange={(e) => setConnectorFormInlineMapping((m) => ({ ...m, sourceAddress: e.target.value }))}
-                      placeholder="e.g. ns=3;s=MyVariable"
+                      placeholder="e.g. ns=1;s=Robot1.Load"
                       className="font-mono text-sm"
                     />
                   </div>
@@ -1795,7 +1784,7 @@ export function EdgePanel() {
               } else if (!res.ok) {
                 toast.error(data.error || 'Failed to create mappings');
               }
-            } catch (e) {
+            } catch (_e) {
               toast.error('Failed to create mappings');
             } finally {
               setReviewLoading(false);

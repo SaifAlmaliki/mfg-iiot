@@ -4,23 +4,23 @@
  * All services subscribe to this unified message broker
  */
 
-import aedes from 'aedes';
+import Aedes from 'aedes';
 import { createServer } from 'net';
 import { createServer as createHttpServer } from 'http';
 import { WebSocketServer } from 'ws';
-import level from 'level';
+import { Level } from 'level';
 
 const PORT = 1883;
 const WS_PORT = 9001;
 
 // Create persistence store
-const db = level('./mqtt-persistence');
+const db = new Level('./mqtt-persistence');
 const persistence = {
   store: db
 };
 
 // Create Aedes MQTT broker
-const broker = aedes({
+const broker = new Aedes({
   id: 'manufacturing-mqtt-broker',
   persistence: persistence as any,
   concurrency: 100,
@@ -108,7 +108,11 @@ wsServer.on('connection', (ws, _req) => {
         // Publish message
         broker.publish({
           topic: msg.topic,
-          payload: Buffer.from(JSON.stringify(msg.payload))
+          payload: Buffer.from(JSON.stringify(msg.payload)),
+          cmd: 'publish' as const,
+          qos: 0,
+          dup: false,
+          retain: false
         }, () => {
           ws.send(JSON.stringify({ type: 'published', topic: msg.topic }));
         });
@@ -119,7 +123,7 @@ wsServer.on('connection', (ws, _req) => {
   });
 
   // Forward MQTT messages to WebSocket clients
-  const handler = (packet: any, client: any) => {
+  const handler = (packet: any, _client: any) => {
     try {
       const payload = packet.payload?.toString() || '';
       ws.send(JSON.stringify({
@@ -129,7 +133,7 @@ wsServer.on('connection', (ws, _req) => {
         retain: packet.retain,
         qos: packet.qos
       }));
-    } catch (e) {
+    } catch (_e) {
       // Ignore
     }
   };
@@ -148,7 +152,7 @@ httpServer.listen(WS_PORT, () => {
 
 // Broadcast broker status
 function broadcastStatus() {
-  const status = {
+  const _status = {
     type: 'broker-status',
     timestamp: Date.now(),
     clients: connectedClients.size,
@@ -192,7 +196,9 @@ app.post('/publish', (req, res) => {
     topic,
     payload: Buffer.from(typeof payload === 'string' ? payload : JSON.stringify(payload)),
     retain,
-    qos
+    qos,
+    cmd: 'publish' as const,
+    dup: false
   }, (err) => {
     if (err) {
       return res.status(500).json({ error: err.message });
@@ -204,7 +210,7 @@ app.post('/publish', (req, res) => {
 // Get retained messages
 app.get('/retained/:topic(*)', (req, res) => {
   const topic = req.params.topic;
-  broker.persistence.RetainedStore?.get(topic, (err: any, packet: any) => {
+  (broker as any).persistence?.RetainedStore?.get(topic, (err: any, packet: any) => {
     if (err || !packet) {
       return res.status(404).json({ error: 'No retained message' });
     }

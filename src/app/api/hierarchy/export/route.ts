@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const format = searchParams.get('format') || 'json';
-    const level = searchParams.get('level') || 'all';
+    const _level = searchParams.get('level') || 'all';
     
     // Fetch full hierarchy
     const hierarchy = await db.enterprise.findFirst({

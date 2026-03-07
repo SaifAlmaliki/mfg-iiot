@@ -49,7 +49,7 @@ export const TelemetryMessageSchema = BaseMessageSchema.extend({
   quality: QualityEnum.optional().default('GOOD'),
   unit: z.string().optional(),
   dataType: z.enum(['BOOL', 'INT8', 'INT16', 'INT32', 'INT64', 'UINT8', 'UINT16', 'UINT32', 'UINT64', 'FLOAT32', 'FLOAT64', 'STRING']).optional(),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 export type TelemetryMessage = z.infer<typeof TelemetryMessageSchema>;
@@ -72,7 +72,7 @@ export const AlarmMessageSchema = BaseMessageSchema.extend({
   acknowledgedAt: z.string().or(z.number()).optional(),
   acknowledgedBy: z.string().optional(),
   shelvedUntil: z.string().or(z.number()).optional(),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 export type AlarmMessage = z.infer<typeof AlarmMessageSchema>;
@@ -85,7 +85,7 @@ export const CommandMessageSchema = BaseMessageSchema.extend({
   commandId: z.string(),
   commandType: z.string(),
   target: z.string(),
-  parameters: z.record(z.any()).optional(),
+  parameters: z.record(z.string(), z.any()).optional(),
   userId: z.string().optional(),
   timeout: z.number().optional(), // seconds
   priority: z.number().min(1).max(5).optional().default(3),
@@ -139,7 +139,7 @@ export const BatchStateMessageSchema = BaseMessageSchema.extend({
   phase: z.string().optional(),
   step: z.string().optional(),
   progress: z.number().min(0).max(100),
-  parameters: z.record(z.any()).optional(),
+  parameters: z.record(z.string(), z.any()).optional(),
   startedAt: z.string().or(z.number()).optional(),
   estimatedEnd: z.string().or(z.number()).optional(),
 });
@@ -301,7 +301,7 @@ export const HeartbeatMessageSchema = BaseMessageSchema.extend({
     memoryUsedMB: z.number().optional(),
     cpuPercent: z.number().optional(),
   }).optional(),
-  config: z.record(z.any()).optional(),
+  config: z.record(z.string(), z.any()).optional(),
 });
 
 export type HeartbeatMessage = z.infer<typeof HeartbeatMessageSchema>;
@@ -403,7 +403,7 @@ export function safeParseMessage(data: unknown): { success: boolean; data?: any;
   try {
     const parsed = typeof data === 'string' ? JSON.parse(data) : data;
     return { success: true, data: parsed };
-  } catch (error) {
+  } catch (_error) {
     return { success: false, error: 'Invalid JSON' };
   }
 }

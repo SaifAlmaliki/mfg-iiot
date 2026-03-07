@@ -20,7 +20,7 @@ export async function GET(
     }
     
     // Get backward trace (where this lot came from)
-    const backwardGenealogy = await db.genealogy.findMany({
+    const _backwardGenealogy = await db.genealogy.findMany({
       where: { toLotId: id },
       include: {
         fromLot: { include: { product: { select: { name: true, code: true } } } },
@@ -33,7 +33,7 @@ export async function GET(
     const backward = await getBackwardTrace(id, new Set([id]));
     
     // Get forward trace (where this lot went)
-    const forwardGenealogy = await db.genealogy.findMany({
+    const _forwardGenealogy = await db.genealogy.findMany({
       where: { fromLotId: id },
       include: {
         toLot: { include: { product: { select: { name: true, code: true } } } },

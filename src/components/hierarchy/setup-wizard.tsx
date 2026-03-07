@@ -1,11 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -19,18 +17,15 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Switch } from '@/components/ui/switch';
 import {
   Building2,
   Factory,
   MapPin,
   Phone,
   Mail,
-  Globe,
   ChevronRight,
   ChevronLeft,
   Check,
@@ -190,7 +185,7 @@ export function SetupWizard({ open, onOpenChange, onComplete }: SetupWizardProps
       setCreatedIds(prev => ({ ...prev, enterpriseId: enterprise.id }));
       toast.success('Enterprise created successfully');
       handleNext();
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to create enterprise');
     } finally {
       setLoading(false);
@@ -220,7 +215,7 @@ export function SetupWizard({ open, onOpenChange, onComplete }: SetupWizardProps
       setCreatedIds(prev => ({ ...prev, siteId: site.id }));
       toast.success('Site created successfully');
       handleNext();
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to create site');
     } finally {
       setLoading(false);
@@ -257,7 +252,7 @@ export function SetupWizard({ open, onOpenChange, onComplete }: SetupWizardProps
       setCreatedIds(prev => ({ ...prev, areaId: area.id }));
       toast.success('Area created successfully');
       handleNext();
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to create area');
     } finally {
       setLoading(false);
@@ -295,7 +290,7 @@ export function SetupWizard({ open, onOpenChange, onComplete }: SetupWizardProps
       setCreatedIds(prev => ({ ...prev, workCenterId: workCenter.id }));
       toast.success('Work Center created successfully');
       handleNext();
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to create work center');
     } finally {
       setLoading(false);
@@ -315,7 +310,7 @@ export function SetupWizard({ open, onOpenChange, onComplete }: SetupWizardProps
       toast.success('Setup completed successfully!');
       onComplete();
       onOpenChange(false);
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to complete setup');
     } finally {
       setLoading(false);

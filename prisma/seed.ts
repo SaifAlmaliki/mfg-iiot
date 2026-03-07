@@ -79,9 +79,6 @@ function randomDate(start: Date, end: Date): Date {
   return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
 }
 
-function generateCode(prefix: string, num: number): string {
-  return `${prefix}-${String(num).padStart(3, '0')}`;
-}
 
 // ============================================
 // SEED FUNCTIONS
@@ -409,7 +406,7 @@ async function seedTags(workUnits: { id: string; code: string }[], equipment: { 
           },
         });
         tags.push(tag);
-      } catch (error) {
+      } catch (_error) {
         // Skip duplicate topics
       }
     }
@@ -456,7 +453,7 @@ async function seedAlarms(tags: { id: string; name: string }[]) {
         },
       });
       alarms.push(alarm);
-    } catch (error) {
+    } catch (_error) {
       // Skip if already exists
     }
   }
@@ -520,7 +517,7 @@ async function seedRecipes(products: { id: string; productType: string }[]) {
   
   const recipes = [];
   const finishedGoods = products.filter(p => p.productType === 'FINISHED_GOOD');
-  const intermediates = products.filter(p => p.productType === 'INTERMEDIATE');
+  const _intermediates = products.filter(p => p.productType === 'INTERMEDIATE');
   const rawMaterials = products.filter(p => p.productType === 'RAW_MATERIAL');
 
   const recipeTemplates = [
@@ -805,7 +802,7 @@ async function seedShipments(
             quantity: randomFloat(50, 200),
           },
         });
-      } catch (error) {
+      } catch (_error) {
         // Skip duplicates
       }
     }
@@ -1269,9 +1266,9 @@ async function main() {
     console.log(`\nAdmin login: admin@acme-mfg.com / admin123`);
     console.log(`Access the platform at: http://localhost:3000\n`);
 
-  } catch (error) {
-    console.error('\n❌ Error during seeding:', error);
-    throw error;
+  } catch (_error) {
+    console.error('\n❌ Error during seeding:', _error);
+    throw _error;
   }
 }
 

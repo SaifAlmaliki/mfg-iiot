@@ -10,8 +10,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
-  TableHeader,
   TableRow,
 } from '@/components/ui/table';
 import {
@@ -21,7 +19,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -35,11 +32,7 @@ import {
   Droplets,
   Zap,
   RefreshCw,
-  Settings,
   TrendingUp,
-  XCircle,
-  Bell,
-  BellOff,
 } from 'lucide-react';
 import {
   LineChart,
@@ -49,7 +42,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from 'recharts';
 import { useRealtimeStore, useRealtimeConnection, useAlarms } from '@/hooks/use-realtime';
 import { useNavigationStore } from '@/lib/store';
@@ -82,7 +74,7 @@ export function ScadaPanel({ currentModule: currentModuleProp = 'scada' }: { cur
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [setpointValue, setSetpointValue] = useState<string>('');
   const [setpointDialogOpen, setSetpointDialogOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [_isMobile, setIsMobile] = useState(false);
   const [hmiViewMode, setHmiViewMode] = useState<HmiViewMode>('list');
   const [selectedGraphicId, setSelectedGraphicId] = useState<string | null>(null);
 
@@ -91,7 +83,7 @@ export function ScadaPanel({ currentModule: currentModuleProp = 'scada' }: { cur
   const tags = useRealtimeStore((state) => state.tags);
   const alarms = useAlarms(false);
   const { writeTag, ackAlarm } = useRealtimeConnection();
-  const connected = useRealtimeStore((state) => state.connected);
+  const _connected = useRealtimeStore((state) => state.connected);
 
   const activeTab = tabFromModule(currentModuleProp);
   const setActiveTab = (value: string) => {
@@ -176,8 +168,8 @@ export function ScadaPanel({ currentModule: currentModuleProp = 'scada' }: { cur
                       const isTemp = tag.id.startsWith('TIC');
                       const isPressure = tag.id.startsWith('PIC');
                       const isFlow = tag.id.startsWith('FIC');
-                      const isLevel = tag.id.startsWith('LIC');
-                      const isMotor = tag.id.startsWith('MOT');
+                      const _isLevel = tag.id.startsWith('LIC');
+                      const _isMotor = tag.id.startsWith('MOT');
                       const isVibration = tag.id.startsWith('VIB');
                       const isPower = tag.id.startsWith('PWR');
 

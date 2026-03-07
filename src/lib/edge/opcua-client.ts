@@ -192,9 +192,11 @@ export async function browseOpcuaNodes(
     maxDepth?: number;
     includeVariablesOnly?: boolean;
     config?: Record<string, unknown>;
+    connectionTimeout?: number;
+    skipDescription?: boolean;
   } = {}
 ): Promise<{ nodes: BrowseNodeResult[]; root?: BrowseNodeResult }> {
-  const { nodeId = 'RootFolder', maxDepth = 6, includeVariablesOnly = false } = options;
+  const { nodeId = 'RootFolder', maxDepth = 6, includeVariablesOnly = false, skipDescription = false } = options;
   let client: OPCUAClient | null = null;
   let session: ClientSession | null = null;
 
@@ -241,15 +243,17 @@ export async function browseOpcuaNodes(
         } catch {
           // ignore
         }
-        try {
-          const descResult = await session!.read({
-            nodeId: refNodeId,
-            attributeId: AttributeIds.Description,
-          });
-          const descVal = descResult.value?.value as { text?: string } | undefined;
-          description = descVal?.text;
-        } catch {
-          // ignore
+        if (!skipDescription) {
+          try {
+            const descResult = await session!.read({
+              nodeId: refNodeId,
+              attributeId: AttributeIds.Description,
+            });
+            const descVal = descResult.value?.value as { text?: string } | undefined;
+            description = descVal?.text;
+          } catch {
+            // ignore
+          }
         }
       }
 
@@ -285,6 +289,7 @@ export async function browseOpcuaNodes(
       endpoint,
       securityMode: (options.config as Record<string, string>)?.securityMode ?? 'None',
       securityPolicy: (options.config as Record<string, string>)?.securityPolicy ?? 'None',
+      connectionTimeout: options.connectionTimeout ?? 25000,
     };
     const connected = await connectOpcua(connOpts);
     client = connected.client;
@@ -313,12 +318,14 @@ export async function browseOpcuaNodes(
  */
 export async function browseOpcuaVariablesFlat(
   endpoint: string,
-  options: { config?: Record<string, unknown> } = {}
+  options: { config?: Record<string, unknown>; connectionTimeout?: number; maxDepth?: number } = {}
 ): Promise<BrowseNodeResult[]> {
   const { nodes } = await browseOpcuaNodes(endpoint, {
-    maxDepth: 8,
+    maxDepth: options.maxDepth ?? 5,
     includeVariablesOnly: true,
+    skipDescription: true,
     config: options.config,
+    connectionTimeout: options.connectionTimeout ?? 25000,
   });
   return nodes;
 }

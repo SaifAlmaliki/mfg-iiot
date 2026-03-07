@@ -12,17 +12,14 @@
 import {
   loadSimulatorsConfig,
 } from '../config-loader';
+import { existsSync, readFileSync } from 'fs';
 import {
   OPCUAServer,
   Variant,
   DataType,
-  DataValue,
   StatusCodes,
-  VariantArrayType,
-  NodeClass,
-  makeRoles,
-  WellKnownRoles,
   ISessionBase,
+  Namespace,
 } from 'node-opcua';
 
 // Types
@@ -113,7 +110,7 @@ const DEFAULT_CONFIG: ServiceConfig = {
           browseName: 'Robot1',
           displayName: 'Robot 1',
           description: 'Industrial Robot',
-          dataType: DataType.ObjectType,
+          dataType: DataType.Null, // Sentinel: node is an Object (folder), not a Variable
           value: null,
           accessLevel: 1,
         },
@@ -183,7 +180,7 @@ const DEFAULT_CONFIG: ServiceConfig = {
           browseName: 'Machine1',
           displayName: 'Machine 1',
           description: 'CNC Machine Tool',
-          dataType: DataType.ObjectType,
+          dataType: DataType.Null, // Sentinel: node is an Object (folder), not a Variable
           value: null,
           accessLevel: 1,
         },
@@ -260,7 +257,7 @@ class OpcuaSimulatorService {
   private isRunning = false;
   private dynamicNodes: Map<string, { node: any; config: GeneratorConfig; nodeConfig: NodeConfig }> = new Map();
   private updateInterval: ReturnType<typeof setInterval> | null = null;
-  private namespaceMap: Map<string, number> = new Map();
+  private namespaceMap: Map<string, Namespace> = new Map();
   /** Resolved update interval in ms (from config file or default). */
   private dynamicUpdateIntervalMs = 5000;
   private robotId: string;
@@ -378,8 +375,8 @@ class OpcuaSimulatorService {
     // Create namespaces and nodes for each companion spec
     for (const nsConfig of this.config.namespaces) {
       // Register namespace
-      const nsIndex = addressSpace.registerNamespace(nsConfig.uri);
-      this.namespaceMap.set(nsConfig.uri, nsIndex);
+      const ns = addressSpace.registerNamespace(nsConfig.uri);
+      this.namespaceMap.set(nsConfig.uri, ns);
 
       // Create root object for this namespace
       const rootFolder = namespace.addObject({
@@ -396,7 +393,7 @@ class OpcuaSimulatorService {
           const displayName = this.substituteAssetIds(nodeConfig.displayName);
           const description = nodeConfig.description ? this.substituteAssetIds(nodeConfig.description) : undefined;
 
-          if (nodeConfig.dataType === DataType.ObjectType) {
+          if (nodeConfig.dataType === DataType.Null) {
             // Create an object folder
             const obj = namespace.addObject({
               organizedBy: currentParent,
@@ -456,11 +453,11 @@ class OpcuaSimulatorService {
   private setupEventHandlers(): void {
     if (!this.server) return;
 
-    this.server.on('session_activated', (session: ISessionBase) => {
+    this.server.on('session_activated', (_session: ISessionBase) => {
       this.metrics.connections++;
     });
 
-    this.server.on('session_closed', (session: ISessionBase) => {
+    this.server.on('session_closed', (_session: ISessionBase) => {
       this.metrics.disconnections++;
     });
   }

@@ -30,23 +30,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import {
   GitBranch,
-  Search,
-  Package,
-  Truck,
-  MapPin,
-  Calendar,
-  User,
-  Building,
   ArrowRight,
   ArrowLeft,
-  ChevronRight,
   FileSearch,
-  Download,
   Plus,
   Edit,
   Trash2,

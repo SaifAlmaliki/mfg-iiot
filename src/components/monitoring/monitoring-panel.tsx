@@ -33,27 +33,18 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Activity,
   Wrench,
   AlertTriangle,
   CheckCircle,
-  Clock,
   Gauge,
-  Thermometer,
-  TrendingUp,
-  Zap,
   Plus,
   Settings,
   Trash2,
   Edit,
   Eye,
   Loader2,
-  History,
-  DollarSign,
-  Users,
-  Calendar,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -168,8 +159,8 @@ export function MonitoringPanel() {
   const [deleteRuleDialog, setDeleteRuleDialog] = useState(false);
 
   // Asset Health state
-  const [healthRecords, setHealthRecords] = useState<HealthRecord[]>([]);
-  const [healthLoading, setHealthLoading] = useState(true);
+  const [_healthRecords, setHealthRecords] = useState<HealthRecord[]>([]);
+  const [_healthLoading, setHealthLoading] = useState(true);
   const [healthDetailDialog, setHealthDetailDialog] = useState(false);
   const [selectedEquipmentHealth, setSelectedEquipmentHealth] = useState<Equipment | null>(null);
 
@@ -262,7 +253,7 @@ export function MonitoringPanel() {
     return 'text-red-500';
   };
 
-  const getHealthBgColor = (score: number) => {
+  const _getHealthBgColor = (score: number) => {
     if (score >= 80) return 'bg-green-500';
     if (score >= 50) return 'bg-yellow-500';
     return 'bg-red-500';

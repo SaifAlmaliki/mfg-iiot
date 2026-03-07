@@ -34,7 +34,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
 import {
   ClipboardList,
   Plus,
@@ -42,24 +41,16 @@ import {
   Pause,
   Square,
   CheckCircle,
-  Clock,
-  Package,
-  Settings,
-  FileText,
-  ArrowRight,
-  Calendar,
-  User,
   Trash2,
   Edit,
   Eye,
   Loader2,
-  AlertCircle,
   RotateCcw,
   SkipForward,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { useRuns, type ProductionRunSummary, type RunCommand } from '@/hooks/use-runs';
+import { useRuns } from '@/hooks/use-runs';
 
 // Types
 interface Product {
@@ -122,14 +113,6 @@ interface MaterialLot {
   location?: string | null;
   productId: string;
   product: Product;
-}
-
-// Form validation helper
-function validateRequired(value: any, fieldName: string): string | null {
-  if (!value || (typeof value === 'string' && !value.trim())) {
-    return `${fieldName} is required`;
-  }
-  return null;
 }
 
 export function MesPanel() {

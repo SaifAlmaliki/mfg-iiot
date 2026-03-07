@@ -21,7 +21,6 @@ import {
   Users,
   Wrench,
   ArrowUpRight,
-  ArrowDownRight,
   Loader2,
   ExternalLink,
 } from 'lucide-react';
