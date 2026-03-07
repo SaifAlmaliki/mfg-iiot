@@ -208,16 +208,10 @@ export function EdgePanel() {
     name: '',
     code: '',
     type: 'OPC_UA',
-    protocol: '',
     endpoint: '',
-    config: '',
     siteId: '',
     heartbeatRate: '30',
     version: '',
-  });
-  const [connectorFormInlineMapping, setConnectorFormInlineMapping] = useState({
-    sourceAddress: '',
-    tagId: '',
   });
   
   // Mapping form state
@@ -341,14 +335,11 @@ export function EdgePanel() {
       name: '',
       code: '',
       type: 'OPC_UA',
-      protocol: '',
       endpoint: '',
-      config: '',
       siteId: sites[0]?.id || '',
       heartbeatRate: '30',
       version: '',
     });
-    setConnectorFormInlineMapping({ sourceAddress: '', tagId: '' });
     setConnectorFormErrors({});
   };
 
@@ -364,14 +355,11 @@ export function EdgePanel() {
       name: connector.name,
       code: connector.code,
       type: connector.type,
-      protocol: connector.protocol || '',
       endpoint: connector.endpoint,
-      config: connector.config ? JSON.stringify(connector.config, null, 2) : '',
       siteId: connector.siteId,
       heartbeatRate: String(connector.heartbeatRate),
       version: connector.version || '',
     });
-    setConnectorFormInlineMapping({ sourceAddress: '', tagId: '' });
     setConnectorFormMode('edit');
     setSelectedConnector(connector);
     setConnectorFormErrors({});
@@ -386,15 +374,6 @@ export function EdgePanel() {
     if (!connectorForm.type) errors.type = 'Type is required';
     if (!connectorForm.endpoint.trim()) errors.endpoint = 'Endpoint is required';
     if (!connectorForm.siteId) errors.siteId = 'Site is required';
-    
-    // Validate JSON config if provided
-    if (connectorForm.config.trim()) {
-      try {
-        JSON.parse(connectorForm.config);
-      } catch {
-        errors.config = 'Invalid JSON format';
-      }
-    }
     
     setConnectorFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -414,16 +393,12 @@ export function EdgePanel() {
         name: connectorForm.name,
         code: connectorForm.code,
         type: connectorForm.type,
-        protocol: connectorForm.protocol || null,
+        protocol: null,
         endpoint: connectorForm.endpoint,
         siteId: connectorForm.siteId,
         heartbeatRate: parseInt(connectorForm.heartbeatRate) || 30,
         version: connectorForm.version || null,
       };
-      
-      if (connectorForm.config.trim()) {
-        body.config = JSON.parse(connectorForm.config);
-      }
       
       const response = await fetch(url, {
         method,
@@ -434,31 +409,6 @@ export function EdgePanel() {
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to save connector');
-      }
-      
-      const savedConnector = await response.json();
-      const connectorId = savedConnector?.id ?? selectedConnector?.id;
-      
-      if (
-        connectorForm.type === 'OPC_UA' &&
-        connectorId &&
-        connectorFormInlineMapping.sourceAddress.trim() &&
-        connectorFormInlineMapping.tagId
-      ) {
-        const mapRes = await fetch('/api/tag-mappings', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            connectorId,
-            sourceAddress: connectorFormInlineMapping.sourceAddress.trim(),
-            sourceType: 'TAG',
-            tagId: connectorFormInlineMapping.tagId,
-          }),
-        });
-        if (!mapRes.ok) {
-          const mapErr = await mapRes.json();
-          toast.warning(`Connector saved but mapping failed: ${mapErr.error || 'Unknown error'}`);
-        }
       }
       
       toast.success(connectorFormMode === 'create' 
@@ -507,20 +457,10 @@ export function EdgePanel() {
     }
     setTestingEndpoint(true);
     try {
-      let config: Record<string, unknown> | undefined;
-      if (connectorForm.config.trim()) {
-        try {
-          config = JSON.parse(connectorForm.config) as Record<string, unknown>;
-        } catch {
-          toast.error('Configuration JSON is invalid');
-          setTestingEndpoint(false);
-          return;
-        }
-      }
       const response = await fetch('/api/opcua/test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ endpoint, config }),
+        body: JSON.stringify({ endpoint }),
       });
       const result = await response.json();
       setTestResult(result);
@@ -1272,38 +1212,26 @@ export function EdgePanel() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="connectorType">Type *</Label>
-                <Select
-                  value={connectorForm.type}
-                  onValueChange={(value) => setConnectorForm({ ...connectorForm, type: value })}
-                >
-                  <SelectTrigger className={connectorFormErrors.type ? 'border-destructive' : ''}>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CONNECTOR_TYPES.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
-                        {type.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {connectorFormErrors.type && (
-                  <p className="text-sm text-destructive">{connectorFormErrors.type}</p>
-                )}
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="connectorProtocol">Protocol</Label>
-                <Input
-                  id="connectorProtocol"
-                  value={connectorForm.protocol}
-                  onChange={(e) => setConnectorForm({ ...connectorForm, protocol: e.target.value })}
-                  placeholder="Optional protocol details"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="connectorType">Type *</Label>
+              <Select
+                value={connectorForm.type}
+                onValueChange={(value) => setConnectorForm({ ...connectorForm, type: value })}
+              >
+                <SelectTrigger className={connectorFormErrors.type ? 'border-destructive' : ''}>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CONNECTOR_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {connectorFormErrors.type && (
+                <p className="text-sm text-destructive">{connectorFormErrors.type}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -1392,57 +1320,55 @@ export function EdgePanel() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="connectorConfig">Configuration (JSON)</Label>
-              <Textarea
-                id="connectorConfig"
-                value={connectorForm.config}
-                onChange={(e) => setConnectorForm({ ...connectorForm, config: e.target.value })}
-                className={`font-mono text-sm ${connectorFormErrors.config ? 'border-destructive' : ''}`}
-                placeholder='{"securityMode": "None", "securityPolicy": "None"}'
-                rows={5}
-              />
-              {connectorFormErrors.config && (
-                <p className="text-sm text-destructive">{connectorFormErrors.config}</p>
-              )}
-            </div>
-
             {connectorForm.type === 'OPC_UA' && (
-              <div className="space-y-3 rounded-lg border p-4 bg-muted/30">
-                <p className="text-sm font-medium">Manual tag mapping (optional)</p>
-                <p className="text-xs text-muted-foreground">
-                  Enter a Node ID and select a Tag below. To pick variables from the server instead, save the connector and use the <strong>Browse</strong> button (magnifying glass) on the connector row.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="inlineMappingSource">Source address (Node ID)</Label>
-                    <Input
-                      id="inlineMappingSource"
-                      value={connectorFormInlineMapping.sourceAddress}
-                      onChange={(e) => setConnectorFormInlineMapping((m) => ({ ...m, sourceAddress: e.target.value }))}
-                      placeholder="e.g. ns=1;s=Robot1.Load"
-                      className="font-mono text-sm"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="inlineMappingTag">Tag</Label>
-                    <Select
-                      value={connectorFormInlineMapping.tagId}
-                      onValueChange={(value) => setConnectorFormInlineMapping((m) => ({ ...m, tagId: value }))}
+              <div className="space-y-2 rounded-lg border p-4 bg-muted/30">
+                <p className="text-sm font-medium">Tag mappings</p>
+                {selectedConnector ? (
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setConnectorDialogOpen(false);
+                        setOpcuaBrowseConnector(selectedConnector);
+                        setOpcuaBrowseOpen(true);
+                      }}
                     >
-                      <SelectTrigger id="inlineMappingTag">
-                        <SelectValue placeholder="Select tag" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {tags.map((tag) => (
-                          <SelectItem key={tag.id} value={tag.id}>
-                            {tag.name} {tag.dataType ? `(${tag.dataType})` : ''}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      <Search className="w-4 h-4 mr-2" />
+                      Browse server
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setConnectorDialogOpen(false);
+                        setMappingForm({
+                          sourceAddress: '',
+                          sourceType: 'TAG',
+                          sourceDataType: '',
+                          scale: '',
+                          offset: '',
+                          swapBytes: false,
+                          isActive: true,
+                          connectorId: selectedConnector.id,
+                          tagId: '',
+                        });
+                        setMappingFormMode('create');
+                        setSelectedMapping(null);
+                        setMappingFormErrors({});
+                        setMappingDialogOpen(true);
+                      }}
+                    >
+                      Add mapping manually
+                    </Button>
                   </div>
-                </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Save the connector first, then use <strong>Browse server</strong> or <strong>Add mapping manually</strong> on the connector row to add tag mappings.
+                  </p>
+                )}
               </div>
             )}
           </div>

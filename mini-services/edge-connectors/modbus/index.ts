@@ -11,6 +11,7 @@
  * Port: 3121 (Health check API)
  */
 
+import http from 'http';
 import mqtt, { MqttClient } from 'mqtt';
 import { PrismaClient } from '@prisma/client';
 
@@ -31,7 +32,7 @@ const prisma = new PrismaClient();
 // Clients
 let mqttClient: MqttClient | null = null;
 let modbusClient: any = null;
-let pollInterval: Timer | null = null;
+let pollInterval: NodeJS.Timeout | null = null;
 
 // Stats
 const stats = {
@@ -122,31 +123,31 @@ async function handleMQTTMessage(topic: string, payload: Buffer) {
 
 async function connectModbus() {
   try {
-    // Dynamic import for jsmodbus
-    const { ModbusTcpClient } = await import('jsmodbus');
-    
-    modbusClient = new ModbusTcpClient(MODBUS_HOST, MODBUS_PORT, MODBUS_UNIT_ID);
-    
-    modbusClient.on('connect', () => {
-      console.log(`[Modbus] Connected to ${MODBUS_HOST}:${MODBUS_PORT}`);
-      updateConnectorStatus('ONLINE');
-      startPolling();
-    });
+    const net = await import('net');
+    const { ModbusTCPClient } = await import('jsmodbus');
 
-    modbusClient.on('error', (error: Error) => {
+    const socket = net.createConnection(
+      { port: MODBUS_PORT, host: MODBUS_HOST },
+      () => {
+        console.log(`[Modbus] Connected to ${MODBUS_HOST}:${MODBUS_PORT}`);
+        updateConnectorStatus('ONLINE');
+        startPolling();
+      }
+    );
+
+    socket.on('error', (error: Error) => {
       console.error('[Modbus] Connection error:', error);
       updateConnectorStatus('ERROR');
       stats.errors++;
     });
 
-    modbusClient.on('close', () => {
+    socket.on('close', () => {
       console.log('[Modbus] Connection closed');
       updateConnectorStatus('OFFLINE');
       stopPolling();
     });
 
-    // Connect
-    modbusClient.connect();
+    modbusClient = new ModbusTCPClient(socket, MODBUS_UNIT_ID);
   } catch (error) {
     console.error('[Modbus] Failed to initialize:', error);
     // Run in simulation mode
@@ -382,34 +383,34 @@ setInterval(sendHeartbeat, 30000);
 // Health Check API
 // ============================================
 
-async function startHealthServer() {
-  Bun.serve({
-    port: HEALTH_PORT,
-    async fetch(req) {
-      const url = new URL(req.url);
-      
-      if (url.pathname === '/health') {
-        return Response.json({
-          status: 'healthy',
-          connector: CONNECTOR_CODE,
-          uptime: Math.floor((Date.now() - stats.startTime.getTime()) / 1000),
-          mqtt: mqttClient?.connected ? 'connected' : 'disconnected',
-          modbus: modbusClient ? 'connected' : 'simulation',
-          endpoint: `${MODBUS_HOST}:${MODBUS_PORT}`,
-          stats: {
-            messagesPublished: stats.messagesPublished,
-            errors: stats.errors,
-            tagCount: tagMappings.length,
-            lastMessageTime: stats.lastMessageTime,
-          },
-        });
-      }
-      
-      return new Response('Not Found', { status: 404 });
-    },
+function startHealthServer() {
+  const server = http.createServer((req, res) => {
+    const url = new URL(req.url ?? '/', `http://localhost:${HEALTH_PORT}`);
+    if (url.pathname === '/health') {
+      const body = JSON.stringify({
+        status: 'healthy',
+        connector: CONNECTOR_CODE,
+        uptime: Math.floor((Date.now() - stats.startTime.getTime()) / 1000),
+        mqtt: mqttClient?.connected ? 'connected' : 'disconnected',
+        modbus: modbusClient ? 'connected' : 'simulation',
+        endpoint: `${MODBUS_HOST}:${MODBUS_PORT}`,
+        stats: {
+          messagesPublished: stats.messagesPublished,
+          errors: stats.errors,
+          tagCount: tagMappings.length,
+          lastMessageTime: stats.lastMessageTime,
+        },
+      });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(body);
+      return;
+    }
+    res.writeHead(404);
+    res.end('Not Found');
   });
-
-  console.log(`[Health] Health check server on port ${HEALTH_PORT}`);
+  server.listen(HEALTH_PORT, () => {
+    console.log(`[Health] Health check server on port ${HEALTH_PORT}`);
+  });
 }
 
 // ============================================
@@ -434,7 +435,7 @@ process.on('SIGTERM', async () => {
   console.log('[Shutdown] SIGTERM received');
   await updateConnectorStatus('OFFLINE');
   stopPolling();
-  modbusClient?.close();
+  modbusClient?.socket?.destroy();
   mqttClient?.end();
   await prisma.$disconnect();
   process.exit(0);
@@ -444,7 +445,7 @@ process.on('SIGINT', async () => {
   console.log('[Shutdown] SIGINT received');
   await updateConnectorStatus('OFFLINE');
   stopPolling();
-  modbusClient?.close();
+  modbusClient?.socket?.destroy();
   mqttClient?.end();
   await prisma.$disconnect();
   process.exit(0);

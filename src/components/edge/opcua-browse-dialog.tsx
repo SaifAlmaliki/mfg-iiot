@@ -21,7 +21,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 export interface BrowseNodeResult {
   nodeId: string;
@@ -90,7 +89,13 @@ export function OpcuaBrowseDialog({
       })
       .then((data) => {
         if (data.nodes && Array.isArray(data.nodes)) {
-          setNodes(data.nodes);
+          const seen = new Set<string>();
+          const deduped = data.nodes.filter((n: BrowseNodeResult) => {
+            if (seen.has(n.nodeId)) return false;
+            seen.add(n.nodeId);
+            return true;
+          });
+          setNodes(deduped);
         }
       })
       .catch((err) => {
@@ -116,7 +121,12 @@ export function OpcuaBrowseDialog({
   };
 
   const applicationNodes = useMemo(() => {
-    return hideSystemNodes ? nodes.filter((n) => !n.nodeId.startsWith('ns=0;')) : nodes;
+    const byId = new Map<string, BrowseNodeResult>();
+    for (const n of nodes) {
+      if (hideSystemNodes && n.nodeId.startsWith('ns=0;')) continue;
+      if (!byId.has(n.nodeId)) byId.set(n.nodeId, n);
+    }
+    return Array.from(byId.values());
   }, [nodes, hideSystemNodes]);
 
   const filteredNodes = useMemo(() => {
@@ -199,15 +209,18 @@ export function OpcuaBrowseDialog({
                 </span>
               </div>
             </div>
-            <ScrollArea className="flex-1 min-h-0 rounded-md border mt-2" style={{ maxHeight: 'min(400px, 50vh)' }}>
-              <Table>
+            <div
+              className="rounded-md border mt-2 overflow-auto overscroll-contain"
+              style={{ height: 'min(400px, 50vh)', minHeight: 200 }}
+            >
+              <Table className="min-w-[600px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-10" />
-                    <TableHead>Node ID</TableHead>
-                    <TableHead>Display Name</TableHead>
-                    <TableHead>Data Type</TableHead>
-                    <TableHead className="hidden sm:table-cell">Description</TableHead>
+                    <TableHead className="min-w-[200px]">Node ID</TableHead>
+                    <TableHead className="min-w-[140px]">Display Name</TableHead>
+                    <TableHead className="min-w-[80px]">Data Type</TableHead>
+                    <TableHead className="hidden sm:table-cell min-w-[120px]">Description</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -216,27 +229,29 @@ export function OpcuaBrowseDialog({
                       key={node.nodeId}
                       className={selected.has(node.nodeId) ? 'bg-primary/5' : ''}
                     >
-                      <TableCell>
+                      <TableCell className="w-10">
                         <Checkbox
                           checked={selected.has(node.nodeId)}
                           onCheckedChange={() => toggle(node.nodeId)}
                         />
                       </TableCell>
-                      <TableCell className="font-mono text-xs max-w-[220px] truncate" title={node.nodeId}>
+                      <TableCell className="font-mono text-xs min-w-[200px] max-w-[280px] truncate" title={node.nodeId}>
                         {node.nodeId}
                       </TableCell>
-                      <TableCell className="font-medium">{node.displayName || node.browseName}</TableCell>
-                      <TableCell>
-                        <span className="text-muted-foreground">{node.dataType ?? '—'}</span>
+                      <TableCell className="font-medium min-w-[140px] max-w-[200px] truncate" title={node.displayName || node.browseName}>
+                        {node.displayName || node.browseName}
                       </TableCell>
-                      <TableCell className="hidden sm:table-cell text-muted-foreground text-xs max-w-[180px] truncate" title={node.description}>
+                      <TableCell className="min-w-[80px] text-muted-foreground">
+                        {node.dataType ?? '—'}
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell text-muted-foreground text-xs min-w-[120px] max-w-[200px] truncate" title={node.description}>
                         {node.description ?? '—'}
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-            </ScrollArea>
+            </div>
             {filteredNodes.length === 0 && (
               <p className="text-sm text-muted-foreground flex-shrink-0 mt-2">
                 No variables match the search. Try a different term or turn off &quot;Hide system nodes&quot;.
