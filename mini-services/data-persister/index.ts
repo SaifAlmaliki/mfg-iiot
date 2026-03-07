@@ -401,8 +401,203 @@ async function checkAlarmConditions(
 }
 
 // ============================================
-// InfluxDB Writing
+// InfluxDB Writing with Enrichment
 // ============================================
+
+interface TagEnrichmentInfo {
+  tagId: string;
+  tagName: string;
+  tagDataType: string;
+  tagEngUnit?: string;
+  equipmentId?: string;
+  equipmentCode?: string;
+  equipmentName?: string;
+  equipmentType?: string;
+  equipmentManufacturer?: string;
+  equipmentModel?: string;
+  workUnitCode?: string;
+  workUnitName?: string;
+  workCenterCode?: string;
+  workCenterName?: string;
+  areaCode?: string;
+  areaName?: string;
+  siteCode?: string;
+  siteName?: string;
+}
+
+interface ProductionContext {
+  orderNumber?: string;
+  orderStatus?: string;
+  productCode?: string;
+  productName?: string;
+  recipeName?: string;
+  recipeVersion?: string;
+  runNumber?: string;
+  runStatus?: string;
+  runPhase?: string;
+}
+
+const tagCache = new Map<string, TagEnrichmentInfo>();
+const productionCache = new Map<string, ProductionContext>();
+const cacheExpiry = new Map<string, number>();
+const CACHE_TTL_MS = 60000;
+
+function checkCache(key: string): boolean {
+  const expiry = cacheExpiry.get(key);
+  if (!expiry) return false;
+  if (Date.now() > expiry) {
+    cacheExpiry.delete(key);
+    tagCache.delete(key);
+    productionCache.delete(key);
+    return false;
+  }
+  return true;
+}
+
+async function getTagEnrichmentInfo(topic: string): Promise<TagEnrichmentInfo | null> {
+  const cacheKey = `tag:${topic}`;
+  if (checkCache(cacheKey)) {
+    return tagCache.get(cacheKey) || null;
+  }
+
+  try {
+    const tag = await prisma.tag.findFirst({
+      where: {
+        OR: [
+          { mqttTopic: topic },
+          { mqttTopic: { contains: topic.replace(/\/value$/, '').replace(/\/setpoint$/, '') } },
+        ],
+      },
+      include: {
+        equipment: {
+          select: { id: true, code: true, name: true, type: true, manufacturer: true, model: true },
+        },
+        workUnit: {
+          include: {
+            workCenter: {
+              include: {
+                area: {
+                  include: {
+                    site: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!tag) {
+      cacheExpiry.set(cacheKey, Date.now() + 300000);
+      return null;
+    }
+
+    const info: TagEnrichmentInfo = {
+      tagId: tag.id,
+      tagName: tag.name,
+      tagDataType: tag.dataType,
+      tagEngUnit: tag.engUnit || undefined,
+    };
+
+    if (tag.equipment) {
+      info.equipmentId = tag.equipment.id;
+      info.equipmentCode = tag.equipment.code;
+      info.equipmentName = tag.equipment.name;
+      info.equipmentType = tag.equipment.type;
+      info.equipmentManufacturer = tag.equipment.manufacturer || undefined;
+      info.equipmentModel = tag.equipment.model || undefined;
+    }
+
+    if (tag.workUnit) {
+      info.workUnitCode = tag.workUnit.code;
+      info.workUnitName = tag.workUnit.name;
+      if (tag.workUnit.workCenter) {
+        info.workCenterCode = tag.workUnit.workCenter.code;
+        info.workCenterName = tag.workUnit.workCenter.name;
+        if (tag.workUnit.workCenter.area) {
+          info.areaCode = tag.workUnit.workCenter.area.code;
+          info.areaName = tag.workUnit.workCenter.area.name;
+          if (tag.workUnit.workCenter.area.site) {
+            info.siteCode = tag.workUnit.workCenter.area.site.code;
+            info.siteName = tag.workUnit.workCenter.area.site.name;
+          }
+        }
+      }
+    }
+
+    tagCache.set(cacheKey, info);
+    cacheExpiry.set(cacheKey, Date.now() + CACHE_TTL_MS);
+    return info;
+  } catch (error) {
+    console.error('[Enrichment] Error fetching tag info:', error);
+    return null;
+  }
+}
+
+async function getProductionContext(workCenterCode: string): Promise<ProductionContext | null> {
+  const cacheKey = `prod:${workCenterCode}`;
+  if (checkCache(cacheKey)) {
+    return productionCache.get(cacheKey) || null;
+  }
+
+  try {
+    const workCenter = await prisma.workCenter.findFirst({
+      where: { code: workCenterCode },
+      include: {
+        productionRuns: {
+          where: { status: 'RUNNING' },
+          take: 1,
+          include: {
+            order: {
+              include: {
+                recipe: {
+                  include: { product: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!workCenter || workCenter.productionRuns.length === 0) {
+      cacheExpiry.set(cacheKey, Date.now() + 30000);
+      return null;
+    }
+
+    const run = workCenter.productionRuns[0];
+    const order = run.order;
+    const recipe = order?.recipe;
+    const product = recipe?.product;
+
+    const context: ProductionContext = {
+      runNumber: run.runNumber,
+      runStatus: run.status,
+      runPhase: run.phase || undefined,
+    };
+
+    if (order) {
+      context.orderNumber = order.orderNumber;
+      context.orderStatus = order.status;
+    }
+    if (recipe) {
+      context.recipeName = recipe.name;
+      context.recipeVersion = recipe.version;
+    }
+    if (product) {
+      context.productCode = product.code;
+      context.productName = product.name;
+    }
+
+    productionCache.set(cacheKey, context);
+    cacheExpiry.set(cacheKey, Date.now() + 30000);
+    return context;
+  } catch (error) {
+    console.error('[Enrichment] Error fetching production context:', error);
+    return null;
+  }
+}
 
 async function writeToInfluxDB(
   topic: string,
@@ -413,25 +608,52 @@ async function writeToInfluxDB(
 
   try {
     const { Point } = await import('@influxdata/influxdb-client');
-    
+
+    const tagInfo = await getTagEnrichmentInfo(topic);
+    const productionContext = await getProductionContext(context.workCenter);
+
     const point = new Point('telemetry')
       .tag('enterprise', context.enterprise)
-      .tag('site', context.site)
-      .tag('area', context.area)
-      .tag('workCenter', context.workCenter)
-      .tag('workUnit', context.workUnit)
+      .tag('site', tagInfo?.siteName || context.site)
+      .tag('siteCode', tagInfo?.siteCode || context.site)
+      .tag('area', tagInfo?.areaName || context.area)
+      .tag('areaCode', tagInfo?.areaCode || context.area)
+      .tag('workCenter', tagInfo?.workCenterName || context.workCenter)
+      .tag('workCenterCode', tagInfo?.workCenterCode || context.workCenter)
+      .tag('workUnit', tagInfo?.workUnitName || context.workUnit)
+      .tag('workUnitCode', tagInfo?.workUnitCode || context.workUnit)
       .tag('topic', topic)
       .tag('attribute', context.attribute);
 
-    // Add value based on type
+    if (tagInfo) {
+      point.tag('tagId', tagInfo.tagId);
+      point.tag('tagName', tagInfo.tagName);
+      point.tag('tagDataType', tagInfo.tagDataType);
+      if (tagInfo.tagEngUnit) point.tag('engUnit', tagInfo.tagEngUnit);
+      if (tagInfo.equipmentCode) {
+        point.tag('equipmentCode', tagInfo.equipmentCode);
+        point.tag('equipmentName', tagInfo.equipmentName || '');
+        point.tag('equipmentType', tagInfo.equipmentType || '');
+      }
+    }
+
+    if (productionContext) {
+      if (productionContext.orderNumber) point.tag('productionOrder', productionContext.orderNumber);
+      if (productionContext.productCode) point.tag('productCode', productionContext.productCode);
+      if (productionContext.productName) point.tag('productName', productionContext.productName);
+      if (productionContext.recipeName) point.tag('recipe', productionContext.recipeName);
+      if (productionContext.runNumber) point.tag('batchId', productionContext.runNumber);
+      if (productionContext.runStatus) point.tag('runStatus', productionContext.runStatus);
+      if (productionContext.runPhase) point.tag('runPhase', productionContext.runPhase);
+    }
+
     const value = message.value !== undefined ? message.value : message;
-    
+
     if (typeof value === 'number') {
       point.floatField('value', value);
     } else if (typeof value === 'boolean') {
       point.booleanField('value', value);
     } else if (typeof value === 'string') {
-      // Try to parse as number
       const num = parseFloat(value);
       if (!isNaN(num)) {
         point.floatField('value', num);
@@ -440,7 +662,6 @@ async function writeToInfluxDB(
       }
     }
 
-    // Add quality if present
     if (message.quality) {
       point.stringField('quality', message.quality);
     }

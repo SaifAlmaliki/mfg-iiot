@@ -52,15 +52,21 @@ import {
   ArrowRightLeft,
   BarChart3,
   Timer,
+  Search,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { SimulatorDiscoveryDialog } from './simulator-discovery-dialog';
+import { MappingReviewTable } from './mapping-review-table';
+import { OpcuaBrowseDialog } from './opcua-browse-dialog';
+import type { BrowseNodeResult } from './opcua-browse-dialog';
 
 // Types
 interface Site {
   id: string;
   name: string;
   code: string;
+  enterprise?: { code: string };
 }
 
 interface Tag {
@@ -184,6 +190,13 @@ export function EdgePanel() {
   // Metrics state
   const [metricsData, setMetricsData] = useState<EdgeConnector | null>(null);
   const [metricsLoading, setMetricsLoading] = useState(false);
+  
+  // Simulator Discovery state
+  const [simulatorDialogOpen, setSimulatorDialogOpen] = useState(false);
+  const [discoveredMappings, setDiscoveredMappings] = useState<any[]>([]);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [opcuaBrowseOpen, setOpcuaBrowseOpen] = useState(false);
+  const [opcuaBrowseConnector, setOpcuaBrowseConnector] = useState<EdgeConnector | null>(null);
   
   // Dropdown data
   const [sites, setSites] = useState<Site[]>([]);
@@ -675,6 +688,7 @@ export function EdgePanel() {
         <TabsList>
           <TabsTrigger value="connectors">Connectors</TabsTrigger>
           <TabsTrigger value="mappings">Tag Mappings</TabsTrigger>
+          <TabsTrigger value="discovery">Simulator Discovery</TabsTrigger>
           <TabsTrigger value="metrics">Metrics</TabsTrigger>
         </TabsList>
 
@@ -742,8 +756,8 @@ export function EdgePanel() {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1">
-                            <Button 
-                              size="sm" 
+                            <Button
+                              size="sm"
                               variant="outline"
                               onClick={() => handleTestConnection(connector)}
                               disabled={testingConnector === connector.id}
@@ -754,6 +768,19 @@ export function EdgePanel() {
                                 <Zap className="w-3 h-3" />
                               )}
                             </Button>
+                            {connector.type === 'OPC_UA' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setOpcuaBrowseConnector(connector);
+                                  setOpcuaBrowseOpen(true);
+                                }}
+                                title="Browse OPC UA server and add tag mappings"
+                              >
+                                <Search className="w-3 h-3" />
+                              </Button>
+                            )}
                             <Button 
                               size="sm" 
                               variant="ghost"
@@ -878,6 +905,107 @@ export function EdgePanel() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Simulator Discovery Tab */}
+        <TabsContent value="discovery" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-muted-foreground">
+              Auto-discover tags from simulators and generate ISA-95 compliant mappings
+            </div>
+            <Button onClick={() => setSimulatorDialogOpen(true)} disabled={sites.length === 0}>
+              <Search className="w-4 h-4 mr-2" />
+              Discover Tags
+            </Button>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Tag Discovery</CardTitle>
+              <CardDescription>
+                Scan simulators for available tags and create mappings with ISA-95 compliant MQTT topics
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {discoveredMappings.length === 0 ? (
+                <div className="text-center py-12">
+                  <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-4">
+                    Click "Discover Tags" to scan simulators and generate tag mappings
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Supported: OPC-UA, Modbus TCP, Energy Meters
+                  </p>
+                </div>
+              ) : (
+                <MappingReviewTable
+                  mappings={discoveredMappings}
+                  onApprove={async (ids) => {
+                    setReviewLoading(true);
+                    try {
+                      const toApprove = discoveredMappings.filter(m => ids.includes(m.id));
+                      const res = await fetch('/api/mapping-review', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          action: 'approve',
+                          siteId: sites[0]?.id,
+                          mappings: toApprove,
+                        }),
+                      });
+                      if (res.ok) {
+                        toast.success(`Approved ${ids.length} mappings`);
+                        setDiscoveredMappings(discoveredMappings.filter(m => !ids.includes(m.id)));
+                        fetchConnectors();
+                        fetchMappings();
+                      }
+                    } catch (error) {
+                      toast.error('Failed to approve mappings');
+                    } finally {
+                      setReviewLoading(false);
+                    }
+                  }}
+                  onReject={async (ids) => {
+                    setDiscoveredMappings(discoveredMappings.filter(m => !ids.includes(m.id)));
+                    toast.success(`Rejected ${ids.length} mappings`);
+                  }}
+                  onSavePending={async (mappings) => {
+                    setReviewLoading(true);
+                    try {
+                      const res = await fetch('/api/mapping-review', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          action: 'save_pending',
+                          siteId: sites[0]?.id,
+                          mappings,
+                        }),
+                      });
+                      if (res.ok) {
+                        toast.success('Mappings saved for later review');
+                      }
+                    } catch (error) {
+                      toast.error('Failed to save mappings');
+                    } finally {
+                      setReviewLoading(false);
+                    }
+                  }}
+                  isLoading={reviewLoading}
+                />
+              )}
+            </CardContent>
+          </Card>
+
+          <SimulatorDiscoveryDialog
+            open={simulatorDialogOpen}
+            onClose={() => setSimulatorDialogOpen(false)}
+            siteId={sites[0]?.id || ''}
+            onDiscovered={(mappings) => {
+              setDiscoveredMappings(mappings);
+              setSimulatorDialogOpen(false);
+              toast.success(`Discovered ${mappings.length} tags`);
+            }}
+          />
         </TabsContent>
 
         {/* Metrics Tab */}
@@ -1111,13 +1239,37 @@ export function EdgePanel() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="connectorEndpoint">Endpoint *</Label>
-                <Input
-                  id="connectorEndpoint"
-                  value={connectorForm.endpoint}
-                  onChange={(e) => setConnectorForm({ ...connectorForm, endpoint: e.target.value })}
-                  className={connectorFormErrors.endpoint ? 'border-destructive' : ''}
-                  placeholder="opc.tcp://192.168.1.10:4840"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="connectorEndpoint"
+                    value={connectorForm.endpoint}
+                    onChange={(e) => setConnectorForm({ ...connectorForm, endpoint: e.target.value })}
+                    className={connectorFormErrors.endpoint ? 'border-destructive' : ''}
+                    placeholder="opc.tcp://192.168.1.10:4840"
+                  />
+                  {connectorForm.type === 'OPC_UA' && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setConnectorForm((f) => ({ ...f, endpoint: 'opc.tcp://localhost:4840' }))}
+                      title="Use local OPC UA server (e.g. simulator)"
+                    >
+                      Local
+                    </Button>
+                  )}
+                  {connectorForm.type === 'MODBUS_TCP' && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setConnectorForm((f) => ({ ...f, endpoint: 'localhost:5020' }))}
+                      title="Use local Modbus TCP (e.g. simulator)"
+                    >
+                      Local
+                    </Button>
+                  )}
+                </div>
                 {connectorFormErrors.endpoint && (
                   <p className="text-sm text-destructive">{connectorFormErrors.endpoint}</p>
                 )}
@@ -1466,6 +1618,55 @@ export function EdgePanel() {
         variant="destructive"
         onConfirm={handleDeleteMapping}
       />
+
+      {/* OPC-UA Browse dialog: live browse server and create mappings */}
+      {opcuaBrowseConnector && (
+        <OpcuaBrowseDialog
+          open={opcuaBrowseOpen}
+          onClose={() => {
+            setOpcuaBrowseOpen(false);
+            setOpcuaBrowseConnector(null);
+          }}
+          endpoint={opcuaBrowseConnector.endpoint}
+          connectorId={opcuaBrowseConnector.id}
+          connectorName={opcuaBrowseConnector.name}
+          siteId={opcuaBrowseConnector.siteId}
+          enterpriseCode={opcuaBrowseConnector.site?.enterprise?.code ?? 'ACME'}
+          siteCode={opcuaBrowseConnector.site?.code ?? 'SITE'}
+          onSelectNodes={async (nodes: BrowseNodeResult[]) => {
+            if (!opcuaBrowseConnector?.id) return;
+            setReviewLoading(true);
+            try {
+              const res = await fetch(`/api/connectors/${opcuaBrowseConnector.id}/mappings-from-browse`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  nodes: nodes.map((n) => ({
+                    nodeId: n.nodeId,
+                    displayName: n.displayName || n.browseName,
+                    dataType: n.dataType,
+                    description: n.description,
+                  })),
+                }),
+              });
+              const data = await res.json();
+              if (res.ok && data.created > 0) {
+                toast.success(`Created ${data.created} tag mapping(s)`);
+                fetchConnectors();
+                fetchMappings();
+              } else if (data.skipped > 0 && data.created === 0) {
+                toast.info('Mappings already exist for selected nodes');
+              } else if (!res.ok) {
+                toast.error(data.error || 'Failed to create mappings');
+              }
+            } catch (e) {
+              toast.error('Failed to create mappings');
+            } finally {
+              setReviewLoading(false);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -1058,14 +1058,15 @@ model DataRetentionPolicy {
   @@map("data_retention_policies")
 }
 
-model MqttTopicSubscription {
-  id          String   @id @default(cuid())
-  topic       String
-  qos         Int      @default(0)
-  isActive    Boolean  @default(true)
-  description String?
-  createdAt   DateTime @default(now())
+model PendingTagMapping {
+  id        String   @id @default(cuid())
+  siteId    String
+  data      Json
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  @@unique([topic])
-  @@map("mqtt_topic_subscriptions")
+  @@index([siteId])
+  @@index([status])
+  @@map("pending_tag_mappings")
 }
