@@ -704,10 +704,7 @@ export function EdgePanel() {
 
         {/* Connectors Tab */}
         <TabsContent value="connectors" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <div className="text-sm text-muted-foreground">
-              {connectors.length} connectors total
-            </div>
+          <div className="flex justify-end">
             <Button onClick={openCreateConnectorDialog}>
               <Plus className="w-4 h-4 mr-2" />
               Add Connector
