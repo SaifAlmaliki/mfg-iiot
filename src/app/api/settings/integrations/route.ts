@@ -81,6 +81,21 @@ export async function PUT(request: NextRequest) {
       const influxCfg = await getInfluxConfig();
       setInfluxConfigCache(influxCfg);
       await flushInflux();
+      console.log('[API] Integrations saved; MQTT reconnect triggered, Influx cache refreshed');
+      // Verify InfluxDB is reachable (health endpoint does not require auth)
+      if (influxCfg?.url) {
+        const healthUrl = influxCfg.url.replace(/\/$/, '') + '/health';
+        try {
+          const healthRes = await fetch(healthUrl);
+          if (healthRes.ok) {
+            console.log('[InfluxDB] Config updated; health check passed.');
+          } else {
+            console.warn('[InfluxDB] Config updated; health check returned:', healthRes.status);
+          }
+        } catch (e) {
+          console.warn('[InfluxDB] Config updated; health check failed:', e instanceof Error ? e.message : e);
+        }
+      }
     } catch (e) {
       console.error('[API] Integrations reconnect after save:', e);
     }

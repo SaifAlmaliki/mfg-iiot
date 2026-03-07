@@ -32,15 +32,37 @@ docker compose -f docker-compose.minimal.yml up -d
 
 ## After starting
 
-1. Set **DATABASE_URL** in `.env` (e.g. `postgresql://uns_user:uns_password@localhost:5432/uns_manufacturing?schema=public`).
-2. Run the app: `npm run dev`.
-3. In the app, go to **Administration > Integrations** and set:
+1. Set **DATABASE_URL** in `.env` for local Postgres (no SSL):
+
+   ```env
+   DATABASE_URL="postgresql://uns_user:uns_password@localhost:5432/uns_manufacturing?schema=public"
+   ```
+
+   Use the same user/password/database as in `docker-compose.minimal.yml` (e.g. `uns_user`, `uns_password`, `uns_manufacturing`). If your Postgres container uses different env vars, match them in the URL.
+
+2. **Deploy the Prisma schema** (creates/updates tables):
+
+   ```bash
+   npm run db:push
+   ```
+   Or, if you use migrations: `npm run db:migrate`
+
+3. **Seed the database** (demo data; uses upserts, does not wipe existing data):
+
+   ```bash
+   npm run db:seed
+   ```
+   Seeding against local Postgres is much faster than a remote DB.
+
+4. Run the app: `npm run dev`.
+
+5. In the app, go to **Administration > Integrations** and set:
    - **MQTT broker URL:** `mqtt://localhost:1883`
    - **InfluxDB URL:** `http://localhost:8086`
    - **InfluxDB token:** `uns-platform-super-secret-token`
    - **InfluxDB org:** `uns-platform`
    - **InfluxDB bucket:** `manufacturing`
-4. Save. The app and (when run) the connector gateway will use this config from the DB.
+5. Save. The app and (when run) the connector gateway will use this config from the DB.
 
 ## Stop
 

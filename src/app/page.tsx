@@ -125,11 +125,11 @@ export default function Home() {
 
           {/* Main Content */}
           <main className={cn(
-            "flex-1 overflow-auto flex flex-col",
+            "flex-1 overflow-auto flex flex-col min-h-0",
             isMobile && "pt-14" // Add top padding for mobile header
           )}>
             <IntegrationsBanner />
-            <div className="flex-1">{renderContent()}</div>
+            <div className="flex-1 min-h-0 flex flex-col">{renderContent()}</div>
           </main>
         </>
       )}

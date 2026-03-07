@@ -72,6 +72,37 @@ bun start
 
 Open [http://localhost:3000](http://localhost:3000) to see your application running.
 
+## 🐳 Start the environment fully
+
+**Option A — Full stack in Docker** (app + infra in containers):
+
+```bash
+npm run docker:up
+# or: docker compose -f docker/docker-compose.yml up -d
+```
+
+**Option B — Minimal infra in Docker, app on host** (typical local dev):
+
+```bash
+# 1. Start Postgres + EMQX + InfluxDB
+npm run docker:minimal
+# or: docker compose -f docker/docker-compose.minimal.yml up -d
+
+# 2. DB setup (once)
+npm run db:push && npm run db:seed
+
+# 3. App + connector (each in its own terminal, or use a process manager)
+npm run dev          # Next.js app → http://localhost:3002
+npm run connector    # Connector gateway (MQTT/InfluxDB)
+
+# 4. Optional simulators (one per terminal)
+npm run opc          # OPC UA simulator
+npm run modbus       # Modbus simulator
+npm run energy       # Energy meter simulator (alias: npm run energz)
+```
+
+See [docker/README.minimal.md](docker/README.minimal.md) for `.env` and Integrations (MQTT/InfluxDB) setup. Full Docker details: [DOCKER.md](DOCKER.md).
+
 ## 🤖 Powered by Z.ai
 
 This scaffold is optimized for use with [Z.ai](https://chat.z.ai) - your AI assistant for:

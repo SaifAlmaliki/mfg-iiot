@@ -218,12 +218,21 @@ export function startMqttConnector(cb: TagValueCallback): () => void {
 
 /**
  * Reconnect using current config from DB (e.g. after saving in Settings > Integrations).
+ * Connects even if no callback is registered in this process, so server logs show connection status.
  */
 export function reconnectMqttConnector(): void {
   disconnect();
   import('@/lib/platform-config').then(({ getMqttConfig }) => {
     getMqttConfig().then((cfg) => {
-      if (!cfg?.url || !callback) return;
+      if (!cfg?.url) {
+        console.log('[MQTT] Reconnect skipped: no broker URL in config');
+        return;
+      }
+      console.log('[MQTT] Reconnecting to broker:', cfg.url.replace(/:[^:@]+@/, ':****@'));
+      // Ensure we have a callback so connect/subscribe runs (no-op if pipeline not in this worker)
+      if (!callback) {
+        callback = () => {};
+      }
       connectWithConfig(cfg);
       refreshTimer = setInterval(() => {
         refreshSubscriptions().catch((e) => console.error('[MQTT] refresh error:', e));

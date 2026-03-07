@@ -12,6 +12,9 @@ let databaseUrl = (process.env.DATABASE_URL ?? '').replace(/sslmode=(prefer|requ
 const adapter = new PrismaPg({ connectionString: databaseUrl })
 const prisma = new PrismaClient({ adapter })
 
+/** Set SEED_MINIMAL=true or SEED_FAST=true for a much smaller, faster seed (e.g. for Neon or quick dev). */
+const SEED_MINIMAL = process.env.SEED_MINIMAL === 'true' || process.env.SEED_FAST === 'true'
+
 // ============================================
 // CONFIGURATION
 // ============================================
@@ -152,14 +155,16 @@ async function seedAreas(sites: { id: string; code: string }[]) {
   console.log('📍 Seeding Areas...');
   
   const areas = [];
-  const areaTypes = [
-    { type: 'PRODUCTION', prefix: 'PROD', count: 3 },
-    { type: 'WAREHOUSE', prefix: 'WH', count: 2 },
-    { type: 'QUALITY_LAB', prefix: 'QC', count: 1 },
-    { type: 'MAINTENANCE', prefix: 'MAINT', count: 1 },
-    { type: 'SHIPPING', prefix: 'SHIP', count: 1 },
-    { type: 'UTILITY', prefix: 'UTIL', count: 1 },
-  ];
+  const areaTypes = SEED_MINIMAL
+    ? [{ type: 'PRODUCTION', prefix: 'PROD', count: 1 }]
+    : [
+        { type: 'PRODUCTION', prefix: 'PROD', count: 3 },
+        { type: 'WAREHOUSE', prefix: 'WH', count: 2 },
+        { type: 'QUALITY_LAB', prefix: 'QC', count: 1 },
+        { type: 'MAINTENANCE', prefix: 'MAINT', count: 1 },
+        { type: 'SHIPPING', prefix: 'SHIP', count: 1 },
+        { type: 'UTILITY', prefix: 'UTIL', count: 1 },
+      ];
 
   for (const site of sites) {
     for (const areaConfig of areaTypes) {
@@ -200,13 +205,15 @@ async function seedWorkCenters(areas: { id: string; code: string }[]) {
   console.log('⚙️ Seeding Work Centers...');
   
   const workCenters = [];
-  const workCenterTypes = [
-    { type: 'PRODUCTION_LINE', prefix: 'LINE', count: 2 },
-    { type: 'BATCH_PROCESS', prefix: 'BATCH', count: 2 },
-    { type: 'CONTINUOUS_PROCESS', prefix: 'CONT', count: 1 },
-    { type: 'ASSEMBLY_CELL', prefix: 'ASSY', count: 1 },
-    { type: 'PACKAGING_LINE', prefix: 'PKG', count: 1 },
-  ];
+  const workCenterTypes = SEED_MINIMAL
+    ? [{ type: 'PRODUCTION_LINE', prefix: 'LINE', count: 1 }]
+    : [
+        { type: 'PRODUCTION_LINE', prefix: 'LINE', count: 2 },
+        { type: 'BATCH_PROCESS', prefix: 'BATCH', count: 2 },
+        { type: 'CONTINUOUS_PROCESS', prefix: 'CONT', count: 1 },
+        { type: 'ASSEMBLY_CELL', prefix: 'ASSY', count: 1 },
+        { type: 'PACKAGING_LINE', prefix: 'PKG', count: 1 },
+      ];
 
   const productionAreas = areas.filter(a => a.code.includes('PROD'));
 
@@ -261,7 +268,7 @@ async function seedWorkUnits(workCenters: { id: string; code: string }[]) {
   ];
 
   for (const wc of workCenters) {
-    const numUnits = randomInt(3, 6);
+    const numUnits = SEED_MINIMAL ? 2 : randomInt(3, 6);
     for (let i = 1; i <= numUnits; i++) {
       const unitType = workUnitTypes[i % workUnitTypes.length]!;
       const code = `${wc.code}-${unitType.prefix}${i}`;
@@ -314,7 +321,7 @@ async function seedEquipment(workCenters: { id: string }[], workUnits: { id: str
   let equipmentIndex = 1;
 
   for (const wc of workCenters) {
-    const numEquipment = randomInt(5, 10);
+    const numEquipment = SEED_MINIMAL ? 2 : randomInt(5, 10);
     for (let i = 0; i < numEquipment; i++) {
       const eqType = randomElement(equipmentTypes);
       const code = `EQ-${String(equipmentIndex++).padStart(4, '0')}`;
@@ -337,6 +344,7 @@ async function seedEquipment(workCenters: { id: string }[], workUnits: { id: str
         },
       });
       equipment.push(eq);
+      if (equipment.length % 100 === 0) process.stdout.write(`   … ${equipment.length} equipment\r`);
     }
   }
 
@@ -374,7 +382,7 @@ async function seedTags(workUnits: { id: string; code: string }[], equipment: { 
     const wcCode = codeParts[2] || 'WC';
     const unitCode = codeParts[3] || wu.code;
 
-    const numTags = randomInt(5, 10);
+    const numTags = SEED_MINIMAL ? 2 : randomInt(5, 10);
     const selectedTags = [...tagTemplates].sort(() => Math.random() - 0.5).slice(0, numTags);
 
     for (const template of selectedTags) {
@@ -405,6 +413,7 @@ async function seedTags(workUnits: { id: string; code: string }[], equipment: { 
         // Skip duplicate topics
       }
     }
+    if (tags.length > 0 && tags.length % 200 === 0) process.stdout.write(`   … ${tags.length} tags\r`);
   }
 
   console.log(`   ✓ Created ${tags.length} tags`);
@@ -1194,11 +1203,15 @@ async function main() {
   console.log('\n========================================');
   console.log('🌱 UNS Platform Database Seeding');
   console.log('========================================\n');
+  if (SEED_MINIMAL) {
+    console.log('⚡ SEED_MINIMAL/SEED_FAST is set — seeding a small dataset for speed.\n');
+  }
 
   try {
     // Core hierarchy
     const enterprise = await seedEnterprise();
     const sites = await seedSites(enterprise.id);
+    if (SEED_MINIMAL) console.log('   (minimal seed: fewer areas, work centers, tags)\n');
     const areas = await seedAreas(sites);
     const workCenters = await seedWorkCenters(areas);
     const workUnits = await seedWorkUnits(workCenters);
@@ -1221,7 +1234,7 @@ async function main() {
     const customers = await seedCustomers();
     await seedShipments(customers, lots);
 
-    // Users & Security
+    // Users & Security (includes admin: admin@acme-mfg.com / admin123)
     await seedUsers(sites);
 
     // Edge & Monitoring
@@ -1251,7 +1264,8 @@ async function main() {
     console.log(`  - Products: ${products.length}`);
     console.log(`  - Recipes: ${recipes.length}`);
     console.log(`  - Orders: ${orders.length}`);
-    console.log(`\nAccess the platform at: http://localhost:3000\n`);
+    console.log(`\nAdmin login: admin@acme-mfg.com / admin123`);
+    console.log(`Access the platform at: http://localhost:3000\n`);
 
   } catch (error) {
     console.error('\n❌ Error during seeding:', error);

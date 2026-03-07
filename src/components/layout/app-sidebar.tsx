@@ -173,7 +173,7 @@ function SidebarContent({ collapsed = false, onNavigate }: SidebarContentProps) 
       </div>
 
       {/* Navigation */}
-      <ScrollArea className="flex-1 py-2 md:py-4">
+      <ScrollArea className="flex-1 min-h-0 py-2 md:py-4 bg-sidebar">
         <nav className="px-2 space-y-1">
           {navigation.map((item) => (
             <div key={item.id}>
@@ -244,7 +244,7 @@ function SidebarContent({ collapsed = false, onNavigate }: SidebarContentProps) 
 
       {/* Footer */}
       {!collapsed && (
-        <div className="p-3 md:p-4 border-t border-sidebar-border">
+        <div className="p-3 md:p-4 border-t border-sidebar-border bg-sidebar shrink-0">
           <div className="flex items-center gap-2 md:gap-3">
             <div className="size-7 md:size-8 rounded-full bg-sidebar-accent flex items-center justify-center">
               <User className="size-3.5 md:size-4" />
@@ -271,25 +271,27 @@ interface SidebarProps {
 export function AppSidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <>
-      {/* Desktop Sidebar */}
+      {/* Desktop Sidebar - fixed so it never scrolls and always shows dark background */}
       <div
         className={cn(
-          'hidden md:flex flex-col h-dvh shrink-0 bg-sidebar text-sidebar-foreground transition-all duration-300',
+          'hidden md:flex flex-col fixed inset-y-0 left-0 z-30 h-dvh shrink-0 bg-sidebar text-sidebar-foreground transition-[width] duration-300',
           collapsed ? 'w-16' : 'w-64'
         )}
       >
-        {/* Collapse Toggle Button for Desktop */}
         <Button
           variant="ghost"
           size="icon"
           onClick={onToggle}
           className="absolute top-4 right-0 translate-x-1/2 z-10 bg-sidebar-accent text-sidebar-foreground hover:bg-sidebar-accent/80 rounded-full size-6"
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </Button>
         <SidebarContent collapsed={collapsed} />
       </div>
+
+      {/* Spacer so main content does not sit under fixed sidebar */}
+      <div className={cn('hidden md:block shrink-0 transition-[width] duration-300', collapsed ? 'w-16' : 'w-64')} />
 
       {/* Mobile Header Bar */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-sidebar text-sidebar-foreground flex items-center justify-between px-4 z-40 border-b border-sidebar-border">

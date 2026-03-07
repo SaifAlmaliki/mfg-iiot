@@ -636,9 +636,9 @@ export function AdminPanel() {
   // ============================================
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="flex flex-col min-h-0 flex-1 p-6 gap-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between shrink-0">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2 text-balance">
             <Users className="size-8 text-primary" />
@@ -649,8 +649,8 @@ export function AdminPanel() {
       </div>
 
       {/* Main Content */}
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-        <TabsList>
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-col flex-1 min-h-0 gap-4">
+        <TabsList className="shrink-0">
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="roles">Roles</TabsTrigger>
           <TabsTrigger value="audit">Audit Logs</TabsTrigger>
@@ -658,8 +658,8 @@ export function AdminPanel() {
         </TabsList>
 
         {/* Users Tab */}
-        <TabsContent value="users" className="space-y-4">
-          <div className="flex justify-between items-center">
+        <TabsContent value="users" className="flex flex-col flex-1 min-h-0 gap-4 mt-0 data-[state=inactive]:hidden">
+          <div className="flex justify-between items-center shrink-0">
             <div className="text-sm text-muted-foreground">
               {users.length} users total
             </div>
@@ -669,8 +669,8 @@ export function AdminPanel() {
             </Button>
           </div>
 
-          <Card>
-            <CardContent>
+          <Card className="flex-1 min-h-0 flex flex-col">
+            <CardContent className="flex-1 min-h-0 overflow-auto p-6">
               {usersLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="w-6 h-6 animate-spin" />

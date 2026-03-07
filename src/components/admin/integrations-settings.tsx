@@ -20,6 +20,7 @@ export function IntegrationsSettings() {
   const hasAdminSettings = useAuthStore((s) => s.hasPermission(PERMISSIONS.ADMIN_SETTINGS));
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [form, setForm] = useState({
     mqttUrl: '',
     mqttClientId: '',
@@ -91,6 +92,8 @@ export function IntegrationsSettings() {
         }
         throw new Error(err.error || 'Save failed');
       }
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 5000);
       toast.success('Integrations saved. MQTT and InfluxDB reconnecting.');
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to save');
@@ -163,6 +166,9 @@ export function IntegrationsSettings() {
               value={form.influxUrl}
               onChange={(e) => setForm((p) => ({ ...p, influxUrl: e.target.value }))}
             />
+            <p className="text-xs text-muted-foreground">
+              Use <code className="rounded bg-muted px-1">http://localhost:8086</code> when the app runs on your machine; use <code className="rounded bg-muted px-1">http://influxdb:8086</code> when the app runs inside Docker.
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="influx-token">Token</Label>
@@ -203,6 +209,11 @@ export function IntegrationsSettings() {
             <ShieldAlert className="w-4 h-4 shrink-0" />
             <span>Only users with the <strong>Administrator</strong> role can save integration settings. Log in as an administrator to change MQTT and InfluxDB settings.</span>
           </div>
+        )}
+        {saveSuccess && (
+          <p className="text-sm text-green-600 dark:text-green-500 w-full">
+            Settings saved. MQTT and InfluxDB are reconnecting. Check the server terminal for [MQTT] Connected or errors.
+          </p>
         )}
         <Button onClick={handleSave} disabled={saving || !hasAdminSettings}>
           {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}

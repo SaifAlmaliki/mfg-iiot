@@ -74,10 +74,13 @@ export async function getMqttConfig(): Promise<MqttConfig | null> {
 
 /**
  * Get InfluxDB config from DB. Returns null if any required field is missing.
+ * When INFLUXDB_URL is set in env, it overrides the DB URL (for local dev when DB has influxdb:8086).
  */
 export async function getInfluxConfig(): Promise<InfluxConfig | null> {
   const rows = await loadConfigRows();
-  const url = getJsonString(rows, INFLUX_URL_KEY);
+  let url = getJsonString(rows, INFLUX_URL_KEY);
+  const envUrl = process.env.INFLUXDB_URL?.trim();
+  if (envUrl) url = envUrl;
   const token = getJsonString(rows, INFLUX_TOKEN_KEY);
   const org = getJsonString(rows, INFLUX_ORG_KEY);
   const bucket = getJsonString(rows, INFLUX_BUCKET_KEY);
