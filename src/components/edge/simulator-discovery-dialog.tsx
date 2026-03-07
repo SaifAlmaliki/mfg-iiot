@@ -9,47 +9,16 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Loader2, Search, Cpu, Zap, Gauge } from 'lucide-react';
+import { Loader2, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-interface SimulatorInfo {
-  id: string;
-  name: string;
-  type: 'opcua' | 'modbus' | 'energymeter';
-  port: number;
-  description?: string;
-  productionLine?: string;
-  status?: string;
-}
+import type { SimulatorEntry } from '@/types/simulator';
+import { SimulatorCard } from '@/components/simulators/simulator-card';
 
 interface SimulatorDiscoveryDialogProps {
   open: boolean;
   onClose: () => void;
   siteId: string;
-  onDiscovered: (mappings: any[]) => void;
-}
-
-function getSimulatorIcon(type: string) {
-  switch (type) {
-    case 'opcua':
-      return <Cpu className="size-5 text-blue-500" aria-hidden />;
-    case 'modbus':
-      return <Zap className="size-5 text-amber-500" aria-hidden />;
-    case 'energymeter':
-      return <Gauge className="size-5 text-green-500" aria-hidden />;
-    default:
-      return <Cpu className="size-5 text-muted-foreground" aria-hidden />;
-  }
-}
-
-function formatType(type: string): string {
-  const t = (type || '').toLowerCase();
-  if (t === 'energymeter') return 'Energy meter';
-  if (t === 'opcua') return 'OPC UA';
-  if (t === 'modbus') return 'Modbus';
-  return (type || '').toUpperCase();
+  onDiscovered: (mappings: unknown[]) => void;
 }
 
 export function SimulatorDiscoveryDialog({
@@ -58,24 +27,22 @@ export function SimulatorDiscoveryDialog({
   siteId,
   onDiscovered,
 }: SimulatorDiscoveryDialogProps) {
-  const [simulators, setSimulators] = useState<SimulatorInfo[]>([]);
+  const [simulators, setSimulators] = useState<SimulatorEntry[]>([]);
   const [selectedSimulator, setSelectedSimulator] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isDiscovering, setIsDiscovering] = useState(false);
 
   useEffect(() => {
-    if (open) {
-      loadSimulators();
-    }
+    if (open) loadSimulators();
   }, [open]);
 
   const loadSimulators = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/simulators');
+      const res = await fetch('/api/simulators?live=true');
       if (res.ok) {
         const data = await res.json();
-        const list = Array.isArray(data) ? data : (data.simulators || []);
+        const list = Array.isArray(data) ? data : (data.simulators ?? []);
         setSimulators(list);
       }
     } catch (error) {
@@ -87,7 +54,6 @@ export function SimulatorDiscoveryDialog({
 
   const handleDiscover = async () => {
     if (!selectedSimulator) return;
-
     setIsDiscovering(true);
     try {
       const res = await fetch(
@@ -95,20 +61,13 @@ export function SimulatorDiscoveryDialog({
       );
       if (res.ok) {
         const data = await res.json();
-        onDiscovered(data.mappings || []);
+        onDiscovered(data.mappings ?? []);
         onClose();
       }
     } catch (error) {
       console.error('Failed to discover tags:', error);
     } finally {
       setIsDiscovering(false);
-    }
-  };
-
-  const handleCardKeyDown = (e: React.KeyboardEvent, id: string) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      setSelectedSimulator(id);
     }
   };
 
@@ -139,46 +98,21 @@ export function SimulatorDiscoveryDialog({
           <>
             <div className="min-h-0 min-w-0 flex-1 overflow-auto -mx-1 px-1" role="list" aria-label="Simulators">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
-                {simulators.map((simulator) => {
-                  const isSelected = selectedSimulator === simulator.id;
-                  return (
-                    <Card
-                      key={simulator.id}
-                      role="button"
-                      tabIndex={0}
-                      aria-pressed={isSelected}
-                      aria-label={`${simulator.name}, ${formatType(simulator.type)}, port ${simulator.port}, ${simulator.status || 'stopped'}`}
-                      className={cn(
-                        'min-w-0 cursor-pointer border-2 py-4 transition-[box-shadow,border-color] duration-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                        isSelected ? 'border-primary shadow-md' : 'border-border',
-                      )}
-                      onClick={() => setSelectedSimulator(simulator.id)}
-                      onKeyDown={(e) => handleCardKeyDown(e, simulator.id)}
-                    >
-                      <CardHeader className="space-y-2 px-4 pb-2 pt-0">
-                        <CardTitle className="line-clamp-2 text-sm font-medium leading-snug text-foreground">
-                          {simulator.name}
-                        </CardTitle>
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                          {getSimulatorIcon(simulator.type)}
-                          <span className="text-muted-foreground">
-                            <span className="font-medium text-foreground">{formatType(simulator.type)}</span>
-                            <span className="tabular-nums font-mono"> · {simulator.port}</span>
-                          </span>
-                          <Badge variant={simulator.status === 'running' ? 'default' : 'secondary'} className="ml-auto shrink-0 text-xs">
-                            {simulator.status || 'stopped'}
-                          </Badge>
-                        </div>
-                      </CardHeader>
-                      {simulator.productionLine && (
-                        <CardContent className="px-4 pt-0 text-xs text-muted-foreground">
-                          <span className="shrink-0">Line </span>
-                          <span>{simulator.productionLine}</span>
-                        </CardContent>
-                      )}
-                    </Card>
-                  );
-                })}
+                {simulators.map((simulator) => (
+                  <SimulatorCard
+                    key={simulator.id}
+                    simulator={{
+                      id: simulator.id,
+                      name: simulator.name,
+                      type: simulator.type,
+                      port: simulator.port,
+                      status: simulator.status,
+                    }}
+                    selected={selectedSimulator === simulator.id}
+                    onSelect={setSelectedSimulator}
+                    showProductionLine={false}
+                  />
+                ))}
               </div>
             </div>
 

@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -12,100 +11,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Cpu, Loader2, Copy, AlertCircle } from 'lucide-react';
-import { toast } from 'sonner';
+import { Cpu, Loader2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-/** API response shape for one simulator (matches GET /api/simulators). */
-interface SimulatorEntry {
-  id: string;
-  name: string;
-  type: string;
-  port: number;
-  enabled: boolean;
-  description: string;
-  status: string;
-  connection: {
-    local: string;
-    docker: string;
-    endpointLocal?: string;
-    endpointDocker?: string;
-  };
-}
-
-function ConnectionCell({ label, value }: { label: string; value: string }) {
-  const copy = () => {
-    navigator.clipboard.writeText(value).then(
-      () => toast.success('Copied to clipboard'),
-      () => toast.error('Copy failed')
-    );
-  }
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-slate-300 text-xs font-medium tabular-nums">{label}:</span>
-      <code className="text-xs bg-slate-700 text-slate-100 px-2 py-1 rounded border border-slate-600 font-mono">
-        {value}
-      </code>
-      <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-slate-100" onClick={copy} title="Copy">
-        <Copy className="h-3.5 w-3.5" />
-      </Button>
-    </div>
-  );
-}
-
-function typeBadgeVariant(type: string): 'default' | 'secondary' | 'outline' {
-  const t = type?.toLowerCase();
-  if (t === 'modbus') return 'default';
-  if (t === 'opcua') return 'secondary';
-  if (t === 'energymeter') return 'outline';
-  return 'outline';
-}
-
-function typeBadgeClassName(type: string): string {
-  const t = type?.toLowerCase();
-  if (t === 'modbus') return 'bg-slate-600 text-slate-100 border-slate-500';
-  if (t === 'opcua') return 'bg-slate-600/80 text-slate-200 border-slate-500';
-  if (t === 'energymeter') return 'bg-transparent text-slate-200 border-slate-500';
-  return 'border-slate-500 text-slate-300';
-}
-
-function statusBadgeClassName(status: string): string {
-  const s = status?.toLowerCase();
-  if (s === 'running') return 'bg-emerald-500/25 text-emerald-300 border-emerald-500/40';
-  if (s === 'stopped') return 'bg-slate-600/50 text-slate-300 border-slate-500/50';
-  return 'bg-slate-600/30 text-slate-400 border-slate-600';
-}
-
-const TYPE_ORDER = ['modbus', 'opcua', 'energymeter'] as const;
-const TYPE_LABELS: Record<string, string> = {
-  modbus: 'Modbus TCP',
-  opcua: 'OPC UA',
-  energymeter: 'Energy Meter',
-};
-
-function groupByType(simulators: SimulatorEntry[]): { type: string; label: string; items: SimulatorEntry[] }[] {
-  const byType = new Map<string, SimulatorEntry[]>();
-  for (const sim of simulators) {
-    const t = (sim.type || '').toLowerCase();
-    if (!byType.has(t)) byType.set(t, []);
-    byType.get(t)!.push(sim);
-  }
-  const ordered: { type: string; label: string; items: SimulatorEntry[] }[] = TYPE_ORDER.filter((t) => byType.has(t)).map((type) => ({
-    type,
-    label: TYPE_LABELS[type] || type,
-    items: byType.get(type)!,
-  }));
-  // Include any other types not in TYPE_ORDER at the end
-  for (const [type] of byType) {
-    if ((TYPE_ORDER as readonly string[]).includes(type)) continue;
-    ordered.push({
-      type,
-      label: type,
-      items: byType.get(type)!,
-    });
-  }
-  return ordered;
-}
+import type { SimulatorEntry } from '@/types/simulator';
+import { groupSimulatorsByType } from '@/types/simulator';
+import {
+  SimulatorStatusBadge,
+  simulatorTypeBadgeVariant,
+  simulatorTypeBadgeClassName,
+} from '@/components/simulators/simulator-shared';
+import { ConnectionCell } from '@/components/simulators/connection-cell';
 
 export function SimulatorsPanel() {
   const [simulators, setSimulators] = useState<SimulatorEntry[]>([]);
@@ -178,7 +93,7 @@ export function SimulatorsPanel() {
                   <TableHead className="text-slate-200 font-semibold">Connection</TableHead>
                 </TableRow>
               </TableHeader>
-              {groupByType(simulators).map(({ type, label, items }) => (
+              {groupSimulatorsByType(simulators).map(({ type, label, items }) => (
                 <TableBody key={type} className="border-b border-slate-600/80">
                   <TableRow className="bg-slate-700/60 border-slate-600 hover:bg-slate-700/60">
                     <TableCell colSpan={5} className="py-3 px-4">
@@ -199,23 +114,23 @@ export function SimulatorsPanel() {
                         </div>
                       </TableCell>
                       <TableCell className="align-top">
-                        <Badge variant={typeBadgeVariant(sim.type)} className={cn('border', typeBadgeClassName(sim.type))}>
+                        <Badge variant={simulatorTypeBadgeVariant(sim.type)} className={cn('border', simulatorTypeBadgeClassName(sim.type))}>
                           {sim.type}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-slate-200 align-top tabular-nums">{sim.port}</TableCell>
                       <TableCell className="align-top">
-                        <Badge variant="outline" className={cn('border', statusBadgeClassName(sim.status))}>
-                          {sim.status === 'running' ? 'Running' : sim.status === 'stopped' ? 'Stopped' : sim.status}
-                        </Badge>
+                        <SimulatorStatusBadge status={sim.status} variant="slate" />
                       </TableCell>
                       <TableCell className="align-top">
                         <div className="flex flex-col gap-2">
                           <ConnectionCell
+                            variant="slate"
                             label="Local"
                             value={sim.connection.endpointLocal ?? sim.connection.local}
                           />
                           <ConnectionCell
+                            variant="slate"
                             label="Docker"
                             value={sim.connection.endpointDocker ?? sim.connection.docker}
                           />
