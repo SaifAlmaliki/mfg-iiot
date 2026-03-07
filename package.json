@@ -14,6 +14,7 @@
   "scripts": {
     "dev": "next dev -p 3002",
     "opc": "npm run --prefix simulators/opcua-service start:dev",
+    "connector": "bun run mini-services/connector-gateway/index.ts",
     "modbus": "npm run --prefix simulators/modbus-service start:dev",
     "energy": "npm run --prefix simulators/energy-meter-service start:dev",
     "energz": "npm run energy",
@@ -80,6 +81,7 @@
     "framer-motion": "^12.23.2",
     "input-otp": "^1.4.2",
     "jose": "^5.9.6",
+    "jsmodbus": "^4.0.10",
     "lucide-react": "^0.525.0",
     "mqtt": "^5.12.0",
     "next": "^16.1.1",

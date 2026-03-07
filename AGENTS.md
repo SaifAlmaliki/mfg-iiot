@@ -260,16 +260,19 @@ export async function GET(request: NextRequest) {
 
 ## Environment Variables
 
-Required (see `.env.example`):
+See `.env.example` for a full template. Core variables:
 
 | Variable | Description |
 |----------|-------------|
-| `DATABASE_URL` | PostgreSQL connection string |
-| `NEXTAUTH_SECRET` | NextAuth.js secret |
-| `NEXTAUTH_URL` | Application URL |
+| `DATABASE_URL` | PostgreSQL connection string (required) |
+| `JWT_SECRET` | Secret for JWT auth cookies (required; set strong value in production) |
+| `MQTT_BROKER_URL` | MQTT broker URL (connector gateway + app real-time) |
 | `INFLUXDB_URL` | InfluxDB URL for time-series data |
 | `INFLUXDB_TOKEN` | InfluxDB auth token |
-| `MQTT_BROKER_URL` | MQTT broker URL |
+| `INFLUXDB_ORG` | InfluxDB organization |
+| `INFLUXDB_BUCKET` | InfluxDB bucket name |
+| `NODE_ENV` | `development` or `production` (optional) |
+| `ENABLE_MQTT_CONNECTOR` | Set to `false` to disable in-app MQTT connector (optional) |
 
 ## Monorepo Packages
 
