@@ -1,6 +1,6 @@
 /**
  * InfluxDB 2.x client for tag time-series.
- * Reads config from env: INFLUXDB_URL, INFLUXDB_TOKEN, INFLUXDB_ORG, INFLUXDB_BUCKET.
+ * Config is supplied via setInfluxConfigCache() from platform-config (DB); no env.
  */
 
 import {
@@ -14,18 +14,29 @@ const MEASUREMENT = 'tag_value';
 const BATCH_SIZE = 100;
 const FLUSH_INTERVAL_MS = 2000;
 
+export interface InfluxConfig {
+  url: string;
+  token: string;
+  org: string;
+  bucket: string;
+}
+
+let cachedConfig: InfluxConfig | null = null;
 let writeApi: WriteApi | null = null;
 let queryApi: QueryApi | null = null;
 
-function getConfig() {
-  const url = process.env.INFLUXDB_URL;
-  const token = process.env.INFLUXDB_TOKEN;
-  const org = process.env.INFLUXDB_ORG;
-  const bucket = process.env.INFLUXDB_BUCKET;
-  if (!url || !token || !org || !bucket) {
-    return null;
-  }
-  return { url, token, org, bucket };
+/**
+ * Set config cache (from platform-config). Call after loading from DB or on reconnect.
+ * Pass null to clear and disconnect.
+ */
+export function setInfluxConfigCache(cfg: InfluxConfig | null): void {
+  cachedConfig = cfg;
+  writeApi = null;
+  queryApi = null;
+}
+
+function getConfig(): InfluxConfig | null {
+  return cachedConfig;
 }
 
 function getClient(): InfluxDB | null {
@@ -104,6 +115,7 @@ export async function flushInflux(): Promise<void> {
     }
     writeApi = null;
   }
+  queryApi = null;
 }
 
 /**

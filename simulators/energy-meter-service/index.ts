@@ -10,9 +10,8 @@
  * just enough to back the energymeter config.
  */
 
-import { readFileSync, existsSync } from 'fs';
-import { join } from 'path';
 import { createServer, type Server as TCPServer, type Socket } from 'net';
+import { loadSimulatorsConfig } from '../config-loader';
 
 interface MeasurementGenerator {
   baseValue: number;
@@ -39,7 +38,7 @@ interface ServiceConfig {
   meters: Meter[];
 }
 
-// JSON config entry from simulators.json
+// JSON config entry from simulator config (modular or single file)
 interface SimulatorConfigEntry {
   id?: string;
   name?: string;
@@ -234,22 +233,12 @@ class EnergyMeterService {
   }
 }
 
-function getSimulatorsConfigPath(): string {
-  const envPath = process.env.SIMULATORS_CONFIG_PATH;
-  if (envPath) return envPath;
-  const fromCwd = join(process.cwd(), 'simulators', 'simulators.json');
-  if (existsSync(fromCwd)) return fromCwd;
-  const fromParent = join(process.cwd(), '..', 'simulators.json');
-  if (existsSync(fromParent)) return fromParent;
-  return join(__dirname, '..', 'simulators.json');
-}
-
 function loadEnergyMeterEntries(): SimulatorConfigEntry[] {
-  const configPath = getSimulatorsConfigPath();
-  if (!existsSync(configPath)) return [];
   try {
-    const data = JSON.parse(readFileSync(configPath, 'utf-8')) as { simulators?: SimulatorConfigEntry[] };
-    return data.simulators?.filter((s) => s.type === 'energymeter' && s.enabled !== false) ?? [];
+    const { simulators } = loadSimulatorsConfig();
+    return (Array.isArray(simulators) ? simulators : []).filter(
+      (s) => (s as SimulatorConfigEntry).type === 'energymeter' && (s as SimulatorConfigEntry).enabled !== false
+    ) as SimulatorConfigEntry[];
   } catch {
     return [];
   }

@@ -113,7 +113,7 @@ export function SimulatorDiscoveryDialog({
           </div>
         ) : simulators.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            No simulators found. Check simulators.json configuration.
+            No simulators found. Check simulator config (simulators/modbus.json, opcua.json, energy.json).
           </div>
         ) : (
           <>

@@ -9,8 +9,9 @@
  * - Anonymous and username/password authentication
  */
 
-import { readFileSync, existsSync } from 'fs';
-import { join } from 'path';
+import {
+  loadSimulatorsConfig,
+} from '../config-loader';
 import {
   OPCUAServer,
   Variant,
@@ -57,6 +58,8 @@ interface ServiceConfig {
   allowAnonymous: boolean;
   users: UserConfig[];
   namespaces: NamespaceConfig[];
+  /** Unique path for this server's endpoint (e.g. /ua/line-a). Required when running multiple servers in one process. */
+  resourcePath?: string;
   /** Interval in ms for updating dynamic node values (default 5000). Can be overridden from config file. */
   dynamicUpdateIntervalMs?: number;
   /** Robot asset ID for this server (e.g. Robot1, Robot2). Used to expose different assets per production line. */
@@ -286,9 +289,12 @@ class OpcuaSimulatorService {
     }
 
     try {
-      // Create OPC UA server (do not pass nodeset_filename: [] or address space stays null)
+      // Create OPC UA server (do not pass nodeset_filename: [] or address space stays null).
+      // resourcePath must be unique per server when running multiple servers in one process.
+      const resourcePath = this.config.resourcePath ?? `/ua/server-${this.config.port}`;
       this.server = new OPCUAServer({
         port: this.config.port,
+        resourcePath,
         hostname: '0.0.0.0',
         serverName: this.config.serverName,
         serverUri: this.config.serverUri,
@@ -333,7 +339,7 @@ class OpcuaSimulatorService {
     }
   }
 
-  /** Load dynamicUpdateIntervalMs from CONFIG_PATH (simulators.json) if set and matching port. */
+  /** Load dynamicUpdateIntervalMs from simulator config if set and matching port. */
   private resolveDynamicUpdateInterval(): void {
     const configPath = process.env.CONFIG_PATH;
     if (this.config.dynamicUpdateIntervalMs != null && this.config.dynamicUpdateIntervalMs > 0) {
@@ -560,7 +566,7 @@ class OpcuaSimulatorService {
   }
 }
 
-// Config entry from simulators.json
+// Config entry from simulator config (single file or modular)
 interface SimulatorConfigEntry {
   id?: string;
   name?: string;
@@ -570,28 +576,14 @@ interface SimulatorConfigEntry {
   config?: Record<string, unknown>;
 }
 
-function getSimulatorsConfigPath(): string {
-  const envPath = process.env.SIMULATORS_CONFIG_PATH;
-  if (envPath) return envPath;
-  const fromCwd = join(process.cwd(), 'simulators', 'simulators.json');
-  if (existsSync(fromCwd)) return fromCwd;
-  const fromParent = join(process.cwd(), '..', 'simulators.json');
-  if (existsSync(fromParent)) return fromParent;
-  return join(__dirname, '..', 'simulators.json');
-}
-
 function loadOpcuaEntries(): SimulatorConfigEntry[] {
-  const configPath = getSimulatorsConfigPath();
-  if (!existsSync(configPath)) {
-    console.warn('[OPC UA] No simulators.json found at', configPath, '- using single server from OPCUA_PORT');
-    return [];
-  }
   try {
-    const data = JSON.parse(readFileSync(configPath, 'utf-8')) as { simulators?: SimulatorConfigEntry[] };
-    const list = data.simulators?.filter((s) => s.type === 'opcua' && s.enabled !== false) ?? [];
-    return list;
+    const { simulators } = loadSimulatorsConfig();
+    return (Array.isArray(simulators) ? simulators : []).filter(
+      (s) => (s as SimulatorConfigEntry).type === 'opcua' && (s as SimulatorConfigEntry).enabled !== false
+    ) as SimulatorConfigEntry[];
   } catch (err) {
-    console.warn('[OPC UA] Failed to load simulators.json:', (err as Error).message, '- using single server');
+    console.warn('[OPC UA] Failed to load simulator config:', (err as Error).message, '- using single server');
     return [];
   }
 }
@@ -611,8 +603,10 @@ async function main(): Promise<void> {
     for (const entry of entries) {
       const port = Number(entry.port) || 4840;
       const config = (entry.config || {}) as Partial<ServiceConfig>;
+      const resourcePath = (config.resourcePath as string) || `/ua/server-${port}`;
       const service = new OpcuaSimulatorService({
         port,
+        resourcePath,
         serverName: (config.serverName as string) || entry.name || `OPC UA Server ${port}`,
         serverUri: (config.serverUri as string) || `urn:industrial-simulator:opcua:server:${port}`,
         productUri: (config.productUri as string) || 'urn:industrial-simulator:opcua:product',
@@ -623,7 +617,7 @@ async function main(): Promise<void> {
       });
       await service.start();
       services.push(service);
-      console.log(`[OPC UA] ${entry.name || entry.id || port}: opc.tcp://localhost:${port}`);
+      console.log(`[OPC UA] ${entry.name || entry.id || port}: opc.tcp://localhost:${port}${resourcePath}`);
     }
     console.log(`[OPC UA] All ${services.length} OPC UA server(s) are ready`);
   }

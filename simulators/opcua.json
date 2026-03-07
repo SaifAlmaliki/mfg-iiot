@@ -1,0 +1,303 @@
+{
+  "simulators": [
+    {
+      "id": "opcua-1",
+      "name": "Robot Cell A & CNC 1",
+      "type": "opcua",
+      "enabled": true,
+      "port": 4840,
+      "description": "Production Line A – Robot 1 and CNC Machine 1 (Robotics and Machine Tools companion specs)",
+      "productionLine": "A",
+      "config": {
+        "serverName": "Industrial Simulator OPC UA Server – Line A",
+        "serverUri": "urn:industrial-simulator:opcua:server:line-a",
+        "productUri": "urn:industrial-simulator:opcua:product",
+        "resourcePath": "/ua/line-a",
+        "allowAnonymous": true,
+        "securityMode": "None",
+        "dynamicUpdateIntervalMs": 5000,
+        "robotId": "Robot1",
+        "machineId": "Machine1",
+        "users": [
+          {
+            "username": "admin",
+            "password": "admin123",
+            "role": "admin"
+          },
+          {
+            "username": "operator",
+            "password": "operator123",
+            "role": "operator"
+          }
+        ],
+        "namespaces": [
+          {
+            "uri": "http://opcfoundation.org/UA/Robotics/",
+            "name": "Robotics",
+            "nodes": [
+              {
+                "nodeId": "Robot1",
+                "browseName": "Robot1",
+                "displayName": "Robot 1",
+                "nodeClass": "Object",
+                "dataType": null
+              },
+              {
+                "nodeId": "Robot1.Status",
+                "browseName": "Status",
+                "displayName": "Robot Status",
+                "nodeClass": "Variable",
+                "dataType": "Int32",
+                "value": 1,
+                "description": "0=Offline, 1=Online, 2=Error, 3=Maintenance"
+              },
+              {
+                "nodeId": "Robot1.PositionX",
+                "browseName": "PositionX",
+                "displayName": "Position X",
+                "nodeClass": "Variable",
+                "dataType": "Double",
+                "value": 500,
+                "description": "X position in mm",
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 500,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 10
+                  }
+                }
+              },
+              {
+                "nodeId": "Robot1.PositionY",
+                "browseName": "PositionY",
+                "displayName": "Position Y",
+                "nodeClass": "Variable",
+                "dataType": "Double",
+                "value": 300,
+                "description": "Y position in mm",
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 300,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 5
+                  }
+                }
+              },
+              {
+                "nodeId": "Robot1.PositionZ",
+                "browseName": "PositionZ",
+                "displayName": "Position Z",
+                "nodeClass": "Variable",
+                "dataType": "Double",
+                "value": 200,
+                "description": "Z position in mm",
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 200,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 3
+                  }
+                }
+              },
+              {
+                "nodeId": "Robot1.Speed",
+                "browseName": "Speed",
+                "displayName": "Speed",
+                "nodeClass": "Variable",
+                "dataType": "Double",
+                "value": 100,
+                "description": "Speed in mm/s",
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 100,
+                  "noise": {
+                    "type": "uniform",
+                    "amplitude": 20
+                  }
+                }
+              },
+              {
+                "nodeId": "Robot1.Load",
+                "browseName": "Load",
+                "displayName": "Load",
+                "nodeClass": "Variable",
+                "dataType": "Double",
+                "value": 50,
+                "description": "Load in kg",
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 50,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 5
+                  }
+                }
+              },
+              {
+                "nodeId": "Robot1.CycleCount",
+                "browseName": "CycleCount",
+                "displayName": "Cycle Count",
+                "nodeClass": "Variable",
+                "dataType": "Int32",
+                "value": 1234,
+                "description": "Total cycles completed"
+              }
+            ]
+          },
+          {
+            "uri": "http://opcfoundation.org/UA/MachineTool/",
+            "name": "MachineTool",
+            "nodes": [
+              {
+                "nodeId": "Machine1",
+                "browseName": "Machine1",
+                "displayName": "Machine 1",
+                "nodeClass": "Object",
+                "dataType": null
+              },
+              {
+                "nodeId": "Machine1.State",
+                "browseName": "State",
+                "displayName": "Machine State",
+                "nodeClass": "Variable",
+                "dataType": "Int32",
+                "value": 1,
+                "description": "0=Stopped, 1=Running, 2=Paused, 3=Error"
+              },
+              {
+                "nodeId": "Machine1.SpindleSpeed",
+                "browseName": "SpindleSpeed",
+                "displayName": "Spindle Speed",
+                "nodeClass": "Variable",
+                "dataType": "Double",
+                "value": 3000,
+                "description": "Spindle speed in RPM",
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 3000,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 50
+                  }
+                }
+              },
+              {
+                "nodeId": "Machine1.FeedRate",
+                "browseName": "FeedRate",
+                "displayName": "Feed Rate",
+                "nodeClass": "Variable",
+                "dataType": "Double",
+                "value": 500,
+                "description": "Feed rate in mm/min",
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 500,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 20
+                  }
+                }
+              },
+              {
+                "nodeId": "Machine1.ToolNumber",
+                "browseName": "ToolNumber",
+                "displayName": "Tool Number",
+                "nodeClass": "Variable",
+                "dataType": "Int32",
+                "value": 1,
+                "description": "Current tool number"
+              },
+              {
+                "nodeId": "Machine1.Temperature",
+                "browseName": "Temperature",
+                "displayName": "Temperature",
+                "nodeClass": "Variable",
+                "dataType": "Double",
+                "value": 45,
+                "description": "Spindle temperature in °C",
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 45,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 3
+                  }
+                }
+              },
+              {
+                "nodeId": "Machine1.Power",
+                "browseName": "Power",
+                "displayName": "Power Consumption",
+                "nodeClass": "Variable",
+                "dataType": "Double",
+                "value": 15.5,
+                "description": "Power in kW",
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 15.5,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 2
+                  }
+                }
+              },
+              {
+                "nodeId": "Machine1.PartCount",
+                "browseName": "PartCount",
+                "displayName": "Parts Produced",
+                "nodeClass": "Variable",
+                "dataType": "Int32",
+                "value": 0,
+                "description": "Total parts produced"
+              }
+            ]
+          }
+        ]
+      },
+      "status": "running"
+    },
+    {
+      "id": "opcua-2",
+      "name": "Robot Cell B & CNC 2",
+      "type": "opcua",
+      "enabled": true,
+      "port": 4850,
+      "description": "Production Line B – Robot 2 and CNC Machine 2 (Welding cell and CNC mill)",
+      "productionLine": "B",
+      "config": {
+        "serverName": "Industrial Simulator OPC UA Server – Line B",
+        "serverUri": "urn:industrial-simulator:opcua:server:line-b",
+        "productUri": "urn:industrial-simulator:opcua:product",
+        "resourcePath": "/ua/line-b",
+        "allowAnonymous": true,
+        "dynamicUpdateIntervalMs": 5000,
+        "robotId": "Robot2",
+        "machineId": "Machine2"
+      },
+      "status": "running"
+    },
+    {
+      "id": "opcua-3",
+      "name": "Robot Cell C & CNC 3",
+      "type": "opcua",
+      "enabled": true,
+      "port": 4860,
+      "description": "Production Line C – Robot 3 and CNC Machine 3 (Assembly cell and CNC lathe)",
+      "productionLine": "C",
+      "config": {
+        "serverName": "Industrial Simulator OPC UA Server – Line C",
+        "serverUri": "urn:industrial-simulator:opcua:server:line-c",
+        "productUri": "urn:industrial-simulator:opcua:product",
+        "resourcePath": "/ua/line-c",
+        "allowAnonymous": true,
+        "dynamicUpdateIntervalMs": 5000,
+        "robotId": "Robot3",
+        "machineId": "Machine3"
+      },
+      "status": "running"
+    }
+  ]
+}

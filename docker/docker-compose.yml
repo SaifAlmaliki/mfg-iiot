@@ -218,6 +218,7 @@ services:
   # ===========================================
   # SIMULATORS (Modbus, OPC UA, Energy Meter)
   # Run from repo root: docker compose -f docker/docker-compose.yml up -d
+  # Config: mount simulators dir and set SIMULATORS_CONFIG_PATH for modular modbus.json, opcua.json, energy.json.
   # ===========================================
   modbus-simulator:
     build:
@@ -225,8 +226,10 @@ services:
       dockerfile: docker/Dockerfile.modbus
     container_name: uns-modbus-simulator
     restart: unless-stopped
+    environment:
+      SIMULATORS_CONFIG_PATH: /app/config/simulators
     volumes:
-      - ../simulators/simulators.json:/app/config/simulators.json:ro
+      - ../simulators:/app/config/simulators:ro
     ports:
       - "5020:5020"
       - "5030:5030"
@@ -240,8 +243,10 @@ services:
       dockerfile: docker/Dockerfile.opcua
     container_name: uns-opcua-simulator
     restart: unless-stopped
+    environment:
+      SIMULATORS_CONFIG_PATH: /app/config/simulators
     volumes:
-      - ../simulators/simulators.json:/app/config/simulators.json:ro
+      - ../simulators:/app/config/simulators:ro
     ports:
       - "4840:4840"
       - "4850:4850"
@@ -254,8 +259,10 @@ services:
       dockerfile: docker/Dockerfile.energymeter
     container_name: uns-energymeter-simulator
     restart: unless-stopped
+    environment:
+      SIMULATORS_CONFIG_PATH: /app/config/simulators
     volumes:
-      - ../simulators/simulators.json:/app/config/simulators.json:ro
+      - ../simulators:/app/config/simulators:ro
     ports:
       - "5010:5010"
       - "5011:5011"

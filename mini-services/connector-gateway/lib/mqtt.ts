@@ -1,14 +1,13 @@
 /**
  * MQTT client singleton for the connector gateway.
- * Single connection shared by all runners; publish to UNS topics.
- * Only platform config from env: MQTT_BROKER_URL.
+ * Config from DB (fetchPlatformMqttConfig); reconnects when config changes.
  */
 
 import mqtt, { MqttClient } from 'mqtt';
-
-const MQTT_URL = process.env.MQTT_BROKER_URL || 'mqtt://localhost:1883';
+import type { PlatformMqttConfig } from './db';
 
 let client: MqttClient | null = null;
+let lastConfig: PlatformMqttConfig | null = null;
 
 export function getMqttClient(): MqttClient | null {
   return client;
@@ -18,14 +17,22 @@ export function isMqttConnected(): boolean {
   return client?.connected ?? false;
 }
 
-export function connectMqtt(): Promise<MqttClient> {
-  if (client?.connected) {
+export function getLastMqttConfig(): PlatformMqttConfig | null {
+  return lastConfig;
+}
+
+export function connectMqtt(config: PlatformMqttConfig): Promise<MqttClient> {
+  if (client?.connected && lastConfig?.url === config.url) {
     return Promise.resolve(client);
   }
 
+  disconnectMqtt();
+  lastConfig = config;
+
   return new Promise((resolve, reject) => {
-    client = mqtt.connect(MQTT_URL, {
-      clientId: `uns-connector-gateway-${Date.now()}`,
+    const clientId = config.clientId?.trim() || `uns-connector-gateway-${Date.now()}`;
+    client = mqtt.connect(config.url, {
+      clientId,
       clean: true,
       keepalive: 60,
       reconnectPeriod: 5000,
@@ -68,6 +75,7 @@ export function disconnectMqtt(): void {
   if (client) {
     client.end();
     client = null;
+    lastConfig = null;
     console.log('[Gateway] MQTT disconnected');
   }
 }

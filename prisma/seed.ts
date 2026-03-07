@@ -809,6 +809,10 @@ async function seedShipments(
 async function seedUsers(sites: { id: string }[]) {
   console.log('👤 Seeding Users & Roles...');
   
+  // Known password for seeded admin (demo only): "admin123"
+  const bcrypt = await import('bcrypt');
+  const adminPasswordHash = await bcrypt.hash('admin123', 10);
+
   // Create roles
   const roles = await Promise.all([
     prisma.role.upsert({
@@ -867,13 +871,14 @@ async function seedUsers(sites: { id: string }[]) {
 
   const users = [];
   for (const data of userData) {
+    const isAdmin = data.roleCode === 'ADMIN';
     const user = await prisma.user.upsert({
       where: { email: data.email },
-      update: {},
+      update: isAdmin ? { passwordHash: adminPasswordHash } : {},
       create: {
         email: data.email,
         name: data.name,
-        passwordHash: '$2b$10$demo.hash.not.for.production.use.only',
+        passwordHash: isAdmin ? adminPasswordHash : '$2b$10$demo.hash.not.for.production.use.only',
         siteId: randomElement(sites).id,
       },
     });
@@ -891,6 +896,7 @@ async function seedUsers(sites: { id: string }[]) {
   }
 
   console.log(`   ✓ Created ${users.length} users with ${roles.length} roles`);
+  console.log('   ✓ Admin login (demo): admin@acme-mfg.com / admin123');
   return { users, roles };
 }
 
@@ -1157,8 +1163,10 @@ async function seedSystemConfig() {
   
   const configs = [
     { key: 'mqtt.broker.url', value: 'mqtt://emqx:1883', description: 'MQTT broker URL', category: 'mqtt' },
+    { key: 'mqtt.client.id', value: 'uns-platform-app', description: 'MQTT client ID', category: 'mqtt' },
     { key: 'mqtt.broker.ws', value: 'ws://localhost:8083/mqtt', description: 'MQTT WebSocket URL', category: 'mqtt' },
     { key: 'influxdb.url', value: 'http://influxdb:8086', description: 'InfluxDB URL', category: 'influxdb' },
+    { key: 'influxdb.token', value: 'uns-platform-super-secret-token', description: 'InfluxDB token', category: 'influxdb' },
     { key: 'influxdb.org', value: 'uns-platform', description: 'InfluxDB organization', category: 'influxdb' },
     { key: 'influxdb.bucket', value: 'manufacturing', description: 'InfluxDB bucket', category: 'influxdb' },
     { key: 'platform.name', value: 'UNS Manufacturing Platform', description: 'Platform name', category: 'general' },

@@ -117,6 +117,7 @@ const navigation: NavItem[] = [
       { id: 'admin-users', label: 'Users', icon: User, href: '/#admin/users' },
       { id: 'admin-roles', label: 'Roles', icon: Users, href: '/#admin/roles' },
       { id: 'admin-audit', label: 'Audit Logs', icon: ClipboardList, href: '/#admin/audit' },
+      { id: 'admin-integrations', label: 'Integrations', icon: Settings, href: '/#admin/integrations' },
     ],
   },
 ];
@@ -150,22 +151,22 @@ function SidebarContent({ collapsed = false, onNavigate }: SidebarContentProps) 
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between h-14 md:h-16 px-3 md:px-4 border-b border-slate-700">
+      <div className="flex items-center justify-between h-14 md:h-16 px-3 md:px-4 border-b border-sidebar-border">
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <Factory className="w-6 h-6 md:w-8 md:h-8 text-emerald-400" />
-            <span className="font-bold text-base md:text-lg">UNS Platform</span>
+            <Factory className="size-6 md:size-8 text-sidebar-primary" />
+            <span className="font-bold text-base md:text-lg text-balance">UNS Platform</span>
           </div>
         )}
         {collapsed && (
-          <Factory className="w-6 h-6 text-emerald-400 mx-auto" />
+          <Factory className="size-6 text-sidebar-primary mx-auto" />
         )}
       </div>
 
       {/* Mode Indicator */}
-      <div className="px-3 md:px-4 py-2 border-b border-slate-700">
+      <div className="px-3 md:px-4 py-2 border-b border-sidebar-border">
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">
+          <Badge variant="outline" className="bg-sidebar-primary/20 text-sidebar-primary border-sidebar-primary/30 text-xs">
             {collapsed ? 'Demo' : 'Demo Mode'}
           </Badge>
         </div>
@@ -182,8 +183,8 @@ function SidebarContent({ collapsed = false, onNavigate }: SidebarContentProps) 
                 className={cn(
                   'flex items-center gap-3 px-2 md:px-3 py-2 rounded-lg transition-colors cursor-pointer',
                   currentModule.startsWith(item.id)
-                    ? 'bg-slate-700 text-white'
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                    : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/80 hover:text-sidebar-foreground'
                 )}
               >
                 <item.icon className="w-5 h-5 shrink-0" />
@@ -226,8 +227,8 @@ function SidebarContent({ collapsed = false, onNavigate }: SidebarContentProps) 
                       className={cn(
                         'flex items-center gap-2 md:gap-3 px-2 md:px-3 py-1.5 md:py-2 rounded-lg text-xs md:text-sm transition-colors cursor-pointer',
                         currentModule === child.id
-                          ? 'bg-slate-700 text-white'
-                          : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                          ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                          : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/80 hover:text-sidebar-foreground'
                       )}
                     >
                       <child.icon className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0" />
@@ -243,17 +244,17 @@ function SidebarContent({ collapsed = false, onNavigate }: SidebarContentProps) 
 
       {/* Footer */}
       {!collapsed && (
-        <div className="p-3 md:p-4 border-t border-slate-700">
+        <div className="p-3 md:p-4 border-t border-sidebar-border">
           <div className="flex items-center gap-2 md:gap-3">
-            <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-slate-700 flex items-center justify-center">
-              <User className="w-3.5 h-3.5 md:w-4 md:h-4" />
+            <div className="size-7 md:size-8 rounded-full bg-sidebar-accent flex items-center justify-center">
+              <User className="size-3.5 md:size-4" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs md:text-sm font-medium truncate">{user?.name ?? 'User'}</p>
-              <p className="text-[10px] md:text-xs text-slate-400 truncate">{user?.email ?? ''}</p>
+              <p className="text-xs md:text-sm font-medium truncate text-pretty">{user?.name ?? 'User'}</p>
+              <p className="text-[10px] md:text-xs text-sidebar-foreground/70 truncate">{user?.email ?? ''}</p>
             </div>
-            <Button variant="ghost" size="icon" className="text-slate-400 h-7 w-7 md:h-8 md:w-8" onClick={() => logout()}>
-              <LogOut className="w-3.5 h-3.5 md:w-4 md:h-4" />
+            <Button variant="ghost" size="icon" className="text-sidebar-foreground/80 size-7 md:size-8" onClick={() => logout()} aria-label="Sign out">
+              <LogOut className="size-3.5 md:size-4" />
             </Button>
           </div>
         </div>
@@ -273,7 +274,7 @@ export function AppSidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Desktop Sidebar */}
       <div
         className={cn(
-          'hidden md:flex flex-col h-screen shrink-0 bg-slate-900 text-white transition-all duration-300',
+          'hidden md:flex flex-col h-dvh shrink-0 bg-sidebar text-sidebar-foreground transition-all duration-300',
           collapsed ? 'w-16' : 'w-64'
         )}
       >
@@ -282,7 +283,8 @@ export function AppSidebar({ collapsed, onToggle }: SidebarProps) {
           variant="ghost"
           size="icon"
           onClick={onToggle}
-          className="absolute top-4 right-0 translate-x-1/2 z-10 bg-slate-800 text-slate-400 hover:text-white rounded-full h-6 w-6"
+          className="absolute top-4 right-0 translate-x-1/2 z-10 bg-sidebar-accent text-sidebar-foreground hover:bg-sidebar-accent/80 rounded-full size-6"
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </Button>
@@ -290,14 +292,14 @@ export function AppSidebar({ collapsed, onToggle }: SidebarProps) {
       </div>
 
       {/* Mobile Header Bar */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-slate-900 text-white flex items-center justify-between px-4 z-40 border-b border-slate-700">
+      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-sidebar text-sidebar-foreground flex items-center justify-between px-4 z-40 border-b border-sidebar-border">
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-white">
-              <Menu className="w-5 h-5" />
+            <Button variant="ghost" size="icon" className="text-sidebar-foreground" aria-label="Open menu">
+              <Menu className="size-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="p-0 w-[280px] bg-slate-900 border-slate-700">
+          <SheetContent side="left" className="p-0 w-[280px] bg-sidebar border-sidebar-border">
             <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
             <SheetDescription className="sr-only">Main navigation menu for the UNS Platform</SheetDescription>
             <SidebarContent onNavigate={() => {
@@ -308,10 +310,10 @@ export function AppSidebar({ collapsed, onToggle }: SidebarProps) {
           </SheetContent>
         </Sheet>
         <div className="flex items-center gap-2">
-          <Factory className="w-5 h-5 text-emerald-400" />
-          <span className="font-bold">UNS Platform</span>
+          <Factory className="size-5 text-sidebar-primary" />
+          <span className="font-bold text-balance">UNS Platform</span>
         </div>
-        <Badge variant="outline" className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px]">
+        <Badge variant="outline" className="bg-sidebar-primary/20 text-sidebar-primary border-sidebar-primary/30 text-[10px]">
           Demo
         </Badge>
       </div>

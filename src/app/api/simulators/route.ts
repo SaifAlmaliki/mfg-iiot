@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
 import {
-  getSimulatorsConfigPath,
+  loadSimulatorsConfig,
   getLocalHost,
   normalizeSimulatorEntry,
   checkSimulatorsLiveness,
@@ -9,18 +8,15 @@ import {
 
 /**
  * GET /api/simulators
- * Returns list of simulators from simulators.json with normalized connection info (local + docker).
+ * Returns list of simulators from config (single file or modular files) with normalized connection info (local + docker).
  * Query: ?live=true to run TCP liveness check and return status 'running' | 'stopped' per simulator.
  */
 export async function GET(request: NextRequest) {
   try {
-    const configPath = getSimulatorsConfigPath();
-    const raw = fs.readFileSync(configPath, 'utf-8');
-    const data = JSON.parse(raw) as { simulators?: unknown[] };
-    const list = Array.isArray(data.simulators) ? data.simulators : [];
+    const { simulators: list } = loadSimulatorsConfig();
     const localHost = getLocalHost();
 
-    let simulators = list.map((item) =>
+    let simulators = (Array.isArray(list) ? list : []).map((item) =>
       normalizeSimulatorEntry(item as { id: string; name: string; type: string; port: number; enabled?: boolean; description?: string; status?: string }, localHost)
     );
 

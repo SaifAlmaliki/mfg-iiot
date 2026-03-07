@@ -2,6 +2,15 @@
 
 Build and run the Modbus, OPC UA, and Energy Meter simulators with Docker. Run these commands from the **repository root** (parent of `docker/`).
 
+## Simulator configuration (single-file vs modular)
+
+Simulator config can be provided in two ways:
+
+- **Modular (default):** One JSON file per type under `simulators/`: `modbus.json`, `opcua.json`, `energy.json`, each with a `simulators` array. The loader merges them in order: modbus → opcua → energy. When `SIMULATORS_CONFIG_PATH` is not set, or when set to the simulators directory, the loader uses these files.
+- **Single file:** To use one merged JSON file instead, set `SIMULATORS_CONFIG_PATH` to the **full path to that file** (e.g. `/app/config/simulators.json`). The loader then reads only that file.
+
+Docker Compose is configured for the **modular** layout: it mounts the `simulators/` directory and sets `SIMULATORS_CONFIG_PATH=/app/config/simulators`.
+
 ## Build images
 
 From repo root:
@@ -41,31 +50,47 @@ docker compose -f docker/docker-compose.yml up -d --build
 
 ## Run a single container (standalone)
 
-Ensure `simulators/simulators.json` is available to the container. Example for Modbus:
+You can use either a single config file or the modular layout.
+
+**Modular (recommended):** mount the `simulators/` directory and set the config path to that directory:
 
 ```bash
 # From repo root
 docker run -d --name modbus-sim \
   -p 5020:5020 -p 5030:5030 -p 5040:5040 \
+  -e SIMULATORS_CONFIG_PATH=/app/config/simulators \
+  -v "$(pwd)/simulators:/app/config/simulators:ro" \
+  uns-modbus-simulator
+```
+
+**Single file:** mount only `simulators.json` and point `SIMULATORS_CONFIG_PATH` at it:
+
+```bash
+# From repo root
+docker run -d --name modbus-sim \
+  -p 5020:5020 -p 5030:5030 -p 5040:5040 \
+  -e SIMULATORS_CONFIG_PATH=/app/config/simulators.json \
   -v "$(pwd)/simulators/simulators.json:/app/config/simulators.json:ro" \
   uns-modbus-simulator
 ```
 
-OPC UA:
+OPC UA (modular):
 
 ```bash
 docker run -d --name opcua-sim \
   -p 4840:4840 -p 4850:4850 \
-  -v "$(pwd)/simulators/simulators.json:/app/config/simulators.json:ro" \
+  -e SIMULATORS_CONFIG_PATH=/app/config/simulators \
+  -v "$(pwd)/simulators:/app/config/simulators:ro" \
   uns-opcua-simulator
 ```
 
-Energy Meter:
+Energy Meter (modular):
 
 ```bash
 docker run -d --name energymeter-sim \
   -p 5010:5010 -p 5011:5011 -p 5012:5012 \
-  -v "$(pwd)/simulators/simulators.json:/app/config/simulators.json:ro" \
+  -e SIMULATORS_CONFIG_PATH=/app/config/simulators \
+  -v "$(pwd)/simulators:/app/config/simulators:ro" \
   uns-energymeter-simulator
 ```
 

@@ -18,6 +18,10 @@ if (existsSync(envPath)) {
   }
 }
 
+// Use jose browser build to avoid Node ESM resolution issues (missing runtime/asn1.js with Bun/Turbopack).
+// Turbopack on Windows does not support absolute paths in resolveAlias; use relative path.
+const joseBrowserPath = resolve(process.cwd(), 'node_modules/jose/dist/browser/index.js');
+
 const nextConfig: NextConfig = {
   output: "standalone",
   typescript: {
@@ -25,6 +29,17 @@ const nextConfig: NextConfig = {
   },
   reactStrictMode: false,
   serverExternalPackages: ['socket.io', 'socket.io-client', 'mqtt', '@influxdata/influxdb-client', '@prisma/client', '@prisma/adapter-pg', 'prisma'],
+  turbopack: {
+    resolveAlias: {
+      // Relative path required: Turbopack reports "windows imports are not implemented yet" for absolute paths.
+      jose: './node_modules/jose/dist/browser/index.js',
+    },
+  },
+  webpack: (config) => {
+    config.resolve = config.resolve ?? {};
+    config.resolve.alias = { ...config.resolve.alias, jose: joseBrowserPath };
+    return config;
+  },
   env: {
     DATABASE_URL: databaseUrl,
     NEXT_DATABASE_URL: databaseUrl, // Also expose with a different name

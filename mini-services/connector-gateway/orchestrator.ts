@@ -4,7 +4,8 @@
  */
 
 import type { ConnectorConfig, IConnectorRunner } from './types';
-import { fetchActiveConnectors, updateConnectorStatus } from './lib/db';
+import { fetchActiveConnectors, updateConnectorStatus, fetchPlatformMqttConfig } from './lib/db';
+import { connectMqtt, disconnectMqtt, getLastMqttConfig } from './lib/mqtt';
 import { OpcuaRunner } from './runners/opcua-runner';
 import { ModbusTcpRunner } from './runners/modbus-tcp-runner';
 
@@ -29,6 +30,13 @@ export class Orchestrator {
   }
 
   async runOnce(): Promise<void> {
+    const mqttCfg = await fetchPlatformMqttConfig();
+    const lastMqtt = getLastMqttConfig();
+    if (mqttCfg && (!lastMqtt || lastMqtt.url !== mqttCfg.url)) {
+      disconnectMqtt();
+      await connectMqtt(mqttCfg).catch((e) => console.error('[Orchestrator] MQTT reconnect:', e));
+    }
+
     const connectors = await fetchActiveConnectors();
     const idSet = new Set(connectors.map((c) => c.id));
 

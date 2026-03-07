@@ -3,8 +3,11 @@
  * Used by API route only (server-side); types can be imported by frontend for type safety.
  */
 
-import path from 'path';
 import net from 'net';
+import {
+  getSimulatorsConfigPath as getLoaderPath,
+  loadSimulatorsConfig as loadFromLoader,
+} from '../../simulators/config-loader';
 
 export interface SimulatorEntry {
   id: string;
@@ -35,13 +38,18 @@ interface RawSimulator {
 }
 
 /**
- * Returns the filesystem path to simulators.json.
+ * Returns the filesystem path to simulator config (single file or directory).
  * Override with SIMULATORS_CONFIG_PATH (absolute or relative to cwd).
  */
 export function getSimulatorsConfigPath(): string {
-  const envPath = process.env.SIMULATORS_CONFIG_PATH;
-  if (envPath) return envPath;
-  return path.join(process.cwd(), 'simulators', 'simulators.json');
+  return getLoaderPath();
+}
+
+/**
+ * Loads simulator config (single file or merged modular files). Use this instead of reading the file directly.
+ */
+export function loadSimulatorsConfig(): { simulators: unknown[] } {
+  return loadFromLoader();
 }
 
 /**

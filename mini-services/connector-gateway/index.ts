@@ -1,7 +1,6 @@
 /**
  * Connector Gateway – one process, many connectors from DB.
- * No .env for endpoints: all config from platform UI (DB).
- * Platform env only: DATABASE_URL, MQTT_BROKER_URL.
+ * Config from platform UI (DB). Env: DATABASE_URL only (MQTT from Settings > Integrations).
  *
  * Run from repo root: npm run connector  (or bun run mini-services/connector-gateway/index.ts)
  */
@@ -9,10 +8,10 @@
 import { config } from 'dotenv';
 import { resolve } from 'path';
 import { connectMqtt, disconnectMqtt, isMqttConnected } from './lib/mqtt';
-import { db } from './lib/db';
+import { db, fetchPlatformMqttConfig } from './lib/db';
 import { Orchestrator } from './orchestrator';
 
-// Load .env from repo root (only DATABASE_URL, MQTT_BROKER_URL)
+// Load .env from repo root (DATABASE_URL only)
 const envPath = resolve(process.cwd(), '.env');
 config({ path: envPath });
 
@@ -22,9 +21,14 @@ async function main(): Promise<void> {
   await db.$connect();
   console.log('[Gateway] DB connected');
 
-  await connectMqtt();
+  const mqttCfg = await fetchPlatformMqttConfig();
+  if (mqttCfg) {
+    await connectMqtt(mqttCfg).catch((err) => {
+      console.error('[Gateway] MQTT connect failed:', err);
+    });
+  }
   if (!isMqttConnected()) {
-    console.warn('[Gateway] MQTT not connected; runners will not publish until MQTT is up.');
+    console.warn('[Gateway] MQTT not configured or not connected. Set MQTT broker URL in platform Settings > Integrations.');
   }
 
   const orchestrator = new Orchestrator();

@@ -1,0 +1,487 @@
+{
+  "simulators": [
+    {
+      "id": "meter-1",
+      "name": "Main LV Switchboard Meters",
+      "type": "energymeter",
+      "enabled": true,
+      "port": 5010,
+      "description": "Production Line A – main LV switchboard with two three‑phase energy meters",
+      "productionLine": "A",
+      "config": {
+        "updateInterval": 5000,
+        "meters": [
+          {
+            "slaveId": 1,
+            "name": "Main Panel Meter",
+            "template": "Generic Three Phase",
+            "measurements": [
+              {
+                "name": "Voltage L1",
+                "type": "voltage",
+                "phase": "L1",
+                "unit": "V",
+                "value": 230.5,
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 230,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 2
+                  }
+                }
+              },
+              {
+                "name": "Voltage L2",
+                "type": "voltage",
+                "phase": "L2",
+                "unit": "V",
+                "value": 229.8,
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 230,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 2
+                  }
+                }
+              },
+              {
+                "name": "Voltage L3",
+                "type": "voltage",
+                "phase": "L3",
+                "unit": "V",
+                "value": 231.2,
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 230,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 2
+                  }
+                }
+              },
+              {
+                "name": "Current L1",
+                "type": "current",
+                "phase": "L1",
+                "unit": "A",
+                "value": 15.2,
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 15,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 3
+                  }
+                }
+              },
+              {
+                "name": "Current L2",
+                "type": "current",
+                "phase": "L2",
+                "unit": "A",
+                "value": 14.8,
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 15,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 3
+                  }
+                }
+              },
+              {
+                "name": "Current L3",
+                "type": "current",
+                "phase": "L3",
+                "unit": "A",
+                "value": 15.5,
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 15,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 3
+                  }
+                }
+              },
+              {
+                "name": "Active Power",
+                "type": "power",
+                "phase": "Total",
+                "unit": "kW",
+                "value": 10.5,
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 10.5,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 1
+                  }
+                }
+              },
+              {
+                "name": "Reactive Power",
+                "type": "reactivePower",
+                "phase": "Total",
+                "unit": "kvar",
+                "value": 3.2,
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 3.2,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 0.5
+                  }
+                }
+              },
+              {
+                "name": "Power Factor",
+                "type": "powerFactor",
+                "phase": "Total",
+                "unit": "",
+                "value": 0.95,
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 0.95,
+                  "noise": {
+                    "type": "uniform",
+                    "amplitude": 0.02
+                  }
+                }
+              },
+              {
+                "name": "Frequency",
+                "type": "frequency",
+                "phase": "Total",
+                "unit": "Hz",
+                "value": 50,
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 50,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 0.1
+                  }
+                }
+              },
+              {
+                "name": "Energy Total",
+                "type": "energy",
+                "phase": "Total",
+                "unit": "kWh",
+                "value": 12543.5
+              }
+            ],
+            "modbusMapping": {
+              "voltage": {
+                "address": 0,
+                "type": "input",
+                "dataType": "uint16",
+                "scaleFactor": 0.1
+              },
+              "current": {
+                "address": 3,
+                "type": "input",
+                "dataType": "uint16",
+                "scaleFactor": 0.01
+              },
+              "power": {
+                "address": 6,
+                "type": "input",
+                "dataType": "int32",
+                "scaleFactor": 0.001
+              },
+              "energy": {
+                "address": 8,
+                "type": "input",
+                "dataType": "int32",
+                "scaleFactor": 0.01
+              },
+              "powerFactor": {
+                "address": 10,
+                "type": "input",
+                "dataType": "uint16",
+                "scaleFactor": 0.001
+              },
+              "frequency": {
+                "address": 11,
+                "type": "input",
+                "dataType": "uint16",
+                "scaleFactor": 0.01
+              }
+            }
+          },
+          {
+            "slaveId": 2,
+            "name": "HVAC Panel Meter",
+            "template": "Generic Single Phase",
+            "measurements": [
+              {
+                "name": "Voltage",
+                "type": "voltage",
+                "phase": "L1",
+                "unit": "V",
+                "value": 230,
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 230,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 3
+                  }
+                }
+              },
+              {
+                "name": "Current",
+                "type": "current",
+                "phase": "L1",
+                "unit": "A",
+                "value": 25.5,
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 25,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 5
+                  }
+                }
+              },
+              {
+                "name": "Active Power",
+                "type": "power",
+                "phase": "Total",
+                "unit": "kW",
+                "value": 5.8,
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 5.8,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 0.5
+                  }
+                }
+              },
+              {
+                "name": "Power Factor",
+                "type": "powerFactor",
+                "phase": "Total",
+                "unit": "",
+                "value": 0.92
+              },
+              {
+                "name": "Frequency",
+                "type": "frequency",
+                "phase": "Total",
+                "unit": "Hz",
+                "value": 50
+              }
+            ]
+          }
+        ]
+      },
+      "status": "running"
+    },
+    {
+      "id": "meter-2",
+      "name": "Production Hall Feeders",
+      "type": "energymeter",
+      "enabled": true,
+      "port": 5011,
+      "description": "Production Line B – feeders for production hall lines",
+      "productionLine": "B",
+      "config": {
+        "updateInterval": 5000,
+        "meters": [
+          {
+            "slaveId": 1,
+            "name": "Feeder Line A",
+            "template": "Generic Three Phase",
+            "measurements": [
+              {
+                "name": "Voltage L1",
+                "type": "voltage",
+                "phase": "L1",
+                "unit": "V",
+                "value": 231.1,
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 231.1,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 2
+                  }
+                }
+              },
+              {
+                "name": "Current L1",
+                "type": "current",
+                "phase": "L1",
+                "unit": "A",
+                "value": 120.5,
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 120.5,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 10
+                  }
+                }
+              },
+              {
+                "name": "Active Power",
+                "type": "power",
+                "phase": "Total",
+                "unit": "kW",
+                "value": 45.2,
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 45.2,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 3
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "slaveId": 2,
+            "name": "Feeder Line B",
+            "template": "Generic Three Phase",
+            "measurements": [
+              {
+                "name": "Voltage L1",
+                "type": "voltage",
+                "phase": "L1",
+                "unit": "V",
+                "value": 229.7,
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 229.7,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 2
+                  }
+                }
+              },
+              {
+                "name": "Current L1",
+                "type": "current",
+                "phase": "L1",
+                "unit": "A",
+                "value": 98.3,
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 98.3,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 8
+                  }
+                }
+              },
+              {
+                "name": "Active Power",
+                "type": "power",
+                "phase": "Total",
+                "unit": "kW",
+                "value": 36.8,
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 36.8,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 2
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "status": "running"
+    },
+    {
+      "id": "meter-3",
+      "name": "Utility Sub‑meters",
+      "type": "energymeter",
+      "enabled": true,
+      "port": 5012,
+      "description": "Production Line C – sub‑meters for HVAC, compressors, lighting",
+      "productionLine": "C",
+      "config": {
+        "updateInterval": 5000,
+        "meters": [
+          {
+            "slaveId": 1,
+            "name": "Chiller Plant",
+            "template": "Generic Three Phase",
+            "measurements": [
+              {
+                "name": "Active Power",
+                "type": "power",
+                "phase": "Total",
+                "unit": "kW",
+                "value": 120,
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 120,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 5
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "slaveId": 2,
+            "name": "Compressed Air Station",
+            "template": "Generic Three Phase",
+            "measurements": [
+              {
+                "name": "Active Power",
+                "type": "power",
+                "phase": "Total",
+                "unit": "kW",
+                "value": 65,
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 65,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 4
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "slaveId": 3,
+            "name": "Lighting Circuits",
+            "template": "Generic Single Phase",
+            "measurements": [
+              {
+                "name": "Active Power",
+                "type": "power",
+                "phase": "Total",
+                "unit": "kW",
+                "value": 12.3,
+                "generator": {
+                  "mode": "dynamic",
+                  "baseValue": 12.3,
+                  "noise": {
+                    "type": "gaussian",
+                    "amplitude": 1
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "status": "running"
+    }
+  ]
+}

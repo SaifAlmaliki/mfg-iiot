@@ -1,0 +1,366 @@
+{
+  "simulators": [
+    {
+      "id": "modbus-1",
+      "name": "Modbus TCP Boiler Line 1",
+      "type": "modbus",
+      "enabled": true,
+      "port": 5020,
+      "description": "Production Line A – boiler line 1: pumps, valves, temperature and pressure control",
+      "productionLine": "A",
+      "config": {
+        "maxConnections": 50,
+        "connectionTimeout": 30000,
+        "frameTimeout": 5000,
+        "slaves": [
+          {
+            "slaveId": 1,
+            "name": "Unit 1",
+            "enabled": true,
+            "registers": {
+              "coils": [
+                {
+                  "address": 0,
+                  "name": "Pump_Start",
+                  "value": false,
+                  "description": "Start pump"
+                },
+                {
+                  "address": 1,
+                  "name": "Pump_Stop",
+                  "value": false,
+                  "description": "Stop pump"
+                },
+                {
+                  "address": 2,
+                  "name": "Valve_Open",
+                  "value": true,
+                  "description": "Open valve"
+                },
+                {
+                  "address": 3,
+                  "name": "Valve_Close",
+                  "value": false,
+                  "description": "Close valve"
+                }
+              ],
+              "discreteInputs": [
+                {
+                  "address": 0,
+                  "name": "Pump_Running",
+                  "value": true,
+                  "description": "Pump is running"
+                },
+                {
+                  "address": 1,
+                  "name": "Valve_Open_Status",
+                  "value": true,
+                  "description": "Valve is open"
+                },
+                {
+                  "address": 2,
+                  "name": "High_Level_Alarm",
+                  "value": false,
+                  "description": "High level alarm"
+                }
+              ],
+              "holdingRegisters": [
+                {
+                  "address": 0,
+                  "name": "Setpoint_Temp",
+                  "value": 75,
+                  "dataType": "int16",
+                  "description": "Temperature setpoint (°C)"
+                },
+                {
+                  "address": 1,
+                  "name": "Setpoint_Pressure",
+                  "value": 100,
+                  "dataType": "int16",
+                  "description": "Pressure setpoint (bar)"
+                },
+                {
+                  "address": 2,
+                  "name": "Flow_Rate_SP",
+                  "value": 500,
+                  "dataType": "int16",
+                  "description": "Flow rate setpoint (L/min)"
+                },
+                {
+                  "address": 10,
+                  "name": "Mode_Select",
+                  "value": 1,
+                  "dataType": "int16",
+                  "description": "0=Manual, 1=Auto, 2=Service"
+                },
+                {
+                  "address": 11,
+                  "name": "Ramp_Rate",
+                  "value": 5,
+                  "dataType": "int16",
+                  "description": "Ramp rate (°C/min)"
+                }
+              ],
+              "inputRegisters": [
+                {
+                  "address": 0,
+                  "name": "Temperature",
+                  "value": 72.5,
+                  "dataType": "float32",
+                  "description": "Current temperature (°C)",
+                  "generator": {
+                    "mode": "dynamic",
+                    "baseValue": 72.5,
+                    "noise": {
+                      "type": "gaussian",
+                      "amplitude": 2
+                    }
+                  }
+                },
+                {
+                  "address": 2,
+                  "name": "Pressure",
+                  "value": 98.3,
+                  "dataType": "float32",
+                  "description": "Current pressure (bar)",
+                  "generator": {
+                    "mode": "dynamic",
+                    "baseValue": 98.3,
+                    "noise": {
+                      "type": "gaussian",
+                      "amplitude": 1.5
+                    }
+                  }
+                },
+                {
+                  "address": 4,
+                  "name": "Flow_Rate",
+                  "value": 485,
+                  "dataType": "int16",
+                  "description": "Current flow rate (L/min)",
+                  "generator": {
+                    "mode": "dynamic",
+                    "baseValue": 485,
+                    "noise": {
+                      "type": "uniform",
+                      "amplitude": 20
+                    }
+                  }
+                },
+                {
+                  "address": 5,
+                  "name": "Level",
+                  "value": 75,
+                  "dataType": "int16",
+                  "description": "Tank level (%)"
+                },
+                {
+                  "address": 6,
+                  "name": "Motor_Speed",
+                  "value": 1450,
+                  "dataType": "int16",
+                  "description": "Motor speed (RPM)",
+                  "generator": {
+                    "mode": "dynamic",
+                    "baseValue": 1450,
+                    "noise": {
+                      "type": "gaussian",
+                      "amplitude": 30
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "slaveId": 2,
+            "name": "Unit 2",
+            "enabled": true,
+            "registers": {
+              "coils": [],
+              "discreteInputs": [],
+              "holdingRegisters": [
+                {
+                  "address": 0,
+                  "name": "SP2_Temp",
+                  "value": 50,
+                  "dataType": "int16",
+                  "description": "Secondary temp setpoint"
+                }
+              ],
+              "inputRegisters": [
+                {
+                  "address": 0,
+                  "name": "Temp2",
+                  "value": 48.2,
+                  "dataType": "float32",
+                  "description": "Secondary temperature",
+                  "generator": {
+                    "mode": "dynamic",
+                    "baseValue": 48.2,
+                    "noise": {
+                      "type": "gaussian",
+                      "amplitude": 1
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "status": "running"
+    },
+    {
+      "id": "modbus-2",
+      "name": "Modbus TCP Boiler Line 2",
+      "type": "modbus",
+      "enabled": true,
+      "port": 5030,
+      "description": "Production Line B – boiler line 2: redundant line with similar signals",
+      "productionLine": "B",
+      "config": {
+        "maxConnections": 50,
+        "connectionTimeout": 30000,
+        "frameTimeout": 5000,
+        "slaves": [
+          {
+            "slaveId": 1,
+            "name": "Boiler Line 2 Unit",
+            "enabled": true,
+            "registers": {
+              "coils": [
+                {
+                  "address": 0,
+                  "name": "Pump2_Start",
+                  "value": false,
+                  "description": "Start pump"
+                },
+                {
+                  "address": 1,
+                  "name": "Pump2_Stop",
+                  "value": false,
+                  "description": "Stop pump"
+                }
+              ],
+              "discreteInputs": [
+                {
+                  "address": 0,
+                  "name": "Pump2_Running",
+                  "value": false,
+                  "description": "Pump running feedback"
+                }
+              ],
+              "holdingRegisters": [
+                {
+                  "address": 0,
+                  "name": "Boiler2_Temp_SP",
+                  "value": 80,
+                  "dataType": "int16",
+                  "description": "Temperature setpoint (°C)"
+                }
+              ],
+              "inputRegisters": [
+                {
+                  "address": 0,
+                  "name": "Boiler2_Temp_PV",
+                  "value": 79.3,
+                  "dataType": "float32",
+                  "description": "Actual temperature (°C)",
+                  "generator": {
+                    "mode": "dynamic",
+                    "baseValue": 79.3,
+                    "noise": {
+                      "type": "gaussian",
+                      "amplitude": 1.5
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "status": "running"
+    },
+    {
+      "id": "modbus-3",
+      "name": "Packaging Line PLC",
+      "type": "modbus",
+      "enabled": true,
+      "port": 5040,
+      "description": "Production Line C – packaging line: conveyor and counters",
+      "productionLine": "C",
+      "config": {
+        "maxConnections": 50,
+        "connectionTimeout": 30000,
+        "frameTimeout": 5000,
+        "slaves": [
+          {
+            "slaveId": 1,
+            "name": "Packaging PLC",
+            "enabled": true,
+            "registers": {
+              "coils": [
+                {
+                  "address": 0,
+                  "name": "Conveyor_Start",
+                  "value": false,
+                  "description": "Start conveyor"
+                },
+                {
+                  "address": 1,
+                  "name": "Conveyor_Stop",
+                  "value": false,
+                  "description": "Stop conveyor"
+                }
+              ],
+              "discreteInputs": [
+                {
+                  "address": 0,
+                  "name": "Emergency_Stop",
+                  "value": false,
+                  "description": "E‑Stop active"
+                }
+              ],
+              "holdingRegisters": [
+                {
+                  "address": 0,
+                  "name": "Conveyor_Speed_SP",
+                  "value": 50,
+                  "dataType": "int16",
+                  "description": "Speed setpoint (%)"
+                }
+              ],
+              "inputRegisters": [
+                {
+                  "address": 0,
+                  "name": "Conveyor_Speed_PV",
+                  "value": 48,
+                  "dataType": "int16",
+                  "description": "Actual speed (%)",
+                  "generator": {
+                    "mode": "dynamic",
+                    "baseValue": 48,
+                    "noise": {
+                      "type": "uniform",
+                      "amplitude": 5
+                    }
+                  }
+                },
+                {
+                  "address": 1,
+                  "name": "Package_Count",
+                  "value": 0,
+                  "dataType": "int32",
+                  "description": "Total packages produced"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "status": "running"
+    }
+  ]
+}

@@ -8,10 +8,9 @@
  * - Real-time data via IPC to main orchestrator
  */
 
-import { readFileSync, existsSync } from 'fs';
-import { join } from 'path';
 import { createServer, type Server as TCPServer, type Socket } from 'net';
 import * as modbus from 'jsmodbus';
+import { loadSimulatorsConfig } from '../config-loader';
 
 // Types
 interface Register {
@@ -75,7 +74,7 @@ interface RegisterConfig {
   generator?: GeneratorConfig;
 }
 
-// JSON config entry from simulators.json
+// JSON config entry from simulator config (modular or single file)
 interface SimulatorConfigEntry {
   id?: string;
   name?: string;
@@ -513,22 +512,12 @@ class ModbusSimulatorService {
   }
 }
 
-function getSimulatorsConfigPath(): string {
-  const envPath = process.env.SIMULATORS_CONFIG_PATH;
-  if (envPath) return envPath;
-  const fromCwd = join(process.cwd(), 'simulators', 'simulators.json');
-  if (existsSync(fromCwd)) return fromCwd;
-  const fromParent = join(process.cwd(), '..', 'simulators.json');
-  if (existsSync(fromParent)) return fromParent;
-  return join(__dirname, '..', 'simulators.json');
-}
-
 function loadModbusEntries(): SimulatorConfigEntry[] {
-  const configPath = getSimulatorsConfigPath();
-  if (!existsSync(configPath)) return [];
   try {
-    const data = JSON.parse(readFileSync(configPath, 'utf-8')) as { simulators?: SimulatorConfigEntry[] };
-    return data.simulators?.filter((s) => s.type === 'modbus' && s.enabled !== false) ?? [];
+    const { simulators } = loadSimulatorsConfig();
+    return (Array.isArray(simulators) ? simulators : []).filter(
+      (s) => (s as SimulatorConfigEntry).type === 'modbus' && (s as SimulatorConfigEntry).enabled !== false
+    ) as SimulatorConfigEntry[];
   } catch {
     return [];
   }

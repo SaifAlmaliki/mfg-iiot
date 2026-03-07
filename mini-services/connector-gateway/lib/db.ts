@@ -94,3 +94,24 @@ export async function recordConnectorMetric(
     },
   });
 }
+
+const MQTT_URL_KEY = 'mqtt.broker.url';
+const MQTT_CLIENT_ID_KEY = 'mqtt.client.id';
+
+export interface PlatformMqttConfig {
+  url: string;
+  clientId?: string;
+}
+
+export async function fetchPlatformMqttConfig(): Promise<PlatformMqttConfig | null> {
+  const rows = await db.systemConfig.findMany({
+    where: { key: { in: [MQTT_URL_KEY, MQTT_CLIENT_ID_KEY] } },
+    select: { key: true, value: true },
+  });
+  const url = rows.find((r) => r.key === MQTT_URL_KEY)?.value;
+  const urlStr = typeof url === 'string' ? url.trim() : null;
+  if (!urlStr) return null;
+  const clientIdRow = rows.find((r) => r.key === MQTT_CLIENT_ID_KEY)?.value;
+  const clientId = typeof clientIdRow === 'string' ? clientIdRow.trim() || undefined : undefined;
+  return { url: urlStr, clientId };
+}

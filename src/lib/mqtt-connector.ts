@@ -1,11 +1,11 @@
 /**
- * MQTT (EMQX) connector: subscribe to tag topics from Postgres metadata,
- * parse messages and emit pipeline events (tagId, value, quality, timestamp).
- * Uses MQTT_BROKER_URL or EMQX_BROKER_URL and EMQX_CLIENT_ID from env.
+ * MQTT connector: subscribe to tag topics from Postgres, emit pipeline events.
+ * Config from DB (platform-config); no env. Reconnect via reconnectMqttConnector().
  */
 
 import mqtt, { MqttClient } from 'mqtt';
 import { db } from '@/lib/db';
+import type { MqttConfig } from '@/lib/platform-config';
 
 const RECONNECT_MIN_MS = 1000;
 const RECONNECT_MAX_MS = 30000;
@@ -31,17 +31,6 @@ let topicToTag: Map<
   string,
   { tagId: string; equipmentId?: string; workUnitId?: string }
 > = new Map();
-
-/**
- * Resolve broker URL from env (MQTT_BROKER_URL or EMQX_BROKER_URL).
- */
-function getBrokerUrl(): string | null {
-  return (
-    process.env.MQTT_BROKER_URL ||
-    process.env.EMQX_BROKER_URL ||
-    null
-  );
-}
 
 /**
  * Load active tag MQTT topics from Postgres and return topic -> tag info map.
@@ -80,7 +69,6 @@ export async function loadTagTopics(): Promise<
 
 /**
  * Parse MQTT payload to value, quality, optional timestamp.
- * Accepts JSON { value, quality?, timestamp? } or plain string value.
  */
 function parsePayload(
   payload: Buffer | string
@@ -111,9 +99,6 @@ function parsePayload(
   return { value, quality, timestamp: now };
 }
 
-/**
- * Subscribe to topics and update client subscriptions (subscribe to new, optionally unsubscribe removed).
- */
 async function refreshSubscriptions(): Promise<void> {
   const topicMap = await loadTagTopics();
   topicToTag = topicMap;
@@ -141,84 +126,108 @@ function getBackoffMs(): number {
   return ms;
 }
 
+function stopTimer(): void {
+  if (refreshTimer) {
+    clearInterval(refreshTimer);
+    refreshTimer = null;
+  }
+}
+
+function disconnect(): void {
+  stopTimer();
+  if (client) {
+    client.end(true);
+    client = null;
+  }
+  currentTopics = new Set();
+}
+
+function connectWithConfig(config: MqttConfig): void {
+  const clientId = config.clientId?.trim() || `uns-platform-${Date.now()}`;
+  client = mqtt.connect(config.url, {
+    clientId,
+    reconnectPeriod: 0,
+    clean: true,
+  });
+
+  client.on('connect', async () => {
+    reconnectAttempts = 0;
+    console.log('[MQTT] Connected to broker');
+    await refreshSubscriptions();
+  });
+
+  client.on('message', (topic, payload) => {
+    const info = topicToTag.get(topic);
+    if (!info || !callback) return;
+    const { value, quality, timestamp } = parsePayload(payload);
+    callback({
+      tagId: info.tagId,
+      value,
+      quality,
+      timestamp,
+      equipmentId: info.equipmentId,
+      workUnitId: info.workUnitId,
+    });
+  });
+
+  client.on('error', (err) => {
+    console.error('[MQTT] Client error:', err);
+  });
+
+  client.on('close', () => {
+    console.log('[MQTT] Connection closed');
+  });
+
+  client.on('reconnect', () => {
+    console.log('[MQTT] Reconnecting...');
+  });
+
+  client.on('offline', () => {
+    const delay = getBackoffMs();
+    console.log(`[MQTT] Offline; reconnecting in ${delay}ms`);
+    setTimeout(() => {
+      if (!client?.connected) connectWithConfig(config);
+    }, delay);
+  });
+}
+
 /**
- * Start MQTT connector: connect to broker, load topics from Postgres, subscribe, and emit events via cb.
- * Reconnects with backoff on disconnect. Refreshes subscriptions on interval.
+ * Start MQTT connector: load config from DB, connect, subscribe, emit events via cb.
+ * If no config in DB, connector is not started.
  */
 export function startMqttConnector(cb: TagValueCallback): () => void {
   callback = cb;
-  const url = getBrokerUrl();
-  if (!url) {
-    console.warn('[MQTT] No MQTT_BROKER_URL or EMQX_BROKER_URL set; connector disabled.');
-    return () => {};
-  }
-
-  const clientId =
-    process.env.EMQX_CLIENT_ID || `uns-platform-${Date.now()}`;
-
-  const connect = () => {
-    client = mqtt.connect(url, {
-      clientId,
-      reconnectPeriod: 0,
-      clean: true,
+  import('@/lib/platform-config').then(({ getMqttConfig }) => {
+    getMqttConfig().then((cfg) => {
+      if (!cfg?.url) {
+        console.warn('[MQTT] No MQTT broker URL in Settings > Integrations; connector disabled.');
+        return;
+      }
+      connectWithConfig(cfg);
+      refreshTimer = setInterval(() => {
+        refreshSubscriptions().catch((e) => console.error('[MQTT] refresh error:', e));
+      }, SUBSCRIPTION_REFRESH_MS);
     });
-
-    client.on('connect', async () => {
-      reconnectAttempts = 0;
-      console.log('[MQTT] Connected to broker');
-      await refreshSubscriptions();
-    });
-
-    client.on('message', (topic, payload) => {
-      const info = topicToTag.get(topic);
-      if (!info || !callback) return;
-      const { value, quality, timestamp } = parsePayload(payload);
-      callback({
-        tagId: info.tagId,
-        value,
-        quality,
-        timestamp,
-        equipmentId: info.equipmentId,
-        workUnitId: info.workUnitId,
-      });
-    });
-
-    client.on('error', (err) => {
-      console.error('[MQTT] Client error:', err);
-    });
-
-    client.on('close', () => {
-      console.log('[MQTT] Connection closed');
-    });
-
-    client.on('reconnect', () => {
-      console.log('[MQTT] Reconnecting...');
-    });
-
-    client.on('offline', () => {
-      const delay = getBackoffMs();
-      console.log(`[MQTT] Offline; reconnecting in ${delay}ms`);
-      setTimeout(() => {
-        if (!client?.connected) connect();
-      }, delay);
-    });
-  };
-
-  connect();
-
-  refreshTimer = setInterval(() => {
-    refreshSubscriptions().catch((e) => console.error('[MQTT] refresh error:', e));
-  }, SUBSCRIPTION_REFRESH_MS);
+  });
 
   return () => {
-    if (refreshTimer) {
-      clearInterval(refreshTimer);
-      refreshTimer = null;
-    }
-    if (client) {
-      client.end(true);
-      client = null;
-    }
+    disconnect();
     callback = null;
   };
+}
+
+/**
+ * Reconnect using current config from DB (e.g. after saving in Settings > Integrations).
+ */
+export function reconnectMqttConnector(): void {
+  disconnect();
+  import('@/lib/platform-config').then(({ getMqttConfig }) => {
+    getMqttConfig().then((cfg) => {
+      if (!cfg?.url || !callback) return;
+      connectWithConfig(cfg);
+      refreshTimer = setInterval(() => {
+        refreshSubscriptions().catch((e) => console.error('[MQTT] refresh error:', e));
+      }, SUBSCRIPTION_REFRESH_MS);
+    });
+  });
 }

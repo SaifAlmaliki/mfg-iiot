@@ -4,27 +4,27 @@ export async function register() {
     return;
   }
 
-  const [{ startSocketIOServer }, { startMqttConnector }, { handleTagValue }] = await Promise.all([
+  const [
+    { startSocketIOServer },
+    { startMqttConnector },
+    { handleTagValue },
+    { getInfluxConfig },
+    { setInfluxConfigCache },
+  ] = await Promise.all([
     import('@/lib/socketio-server'),
     import('@/lib/mqtt-connector'),
     import('@/lib/realtime-pipeline'),
+    import('@/lib/platform-config'),
+    import('@/lib/influxdb'),
   ]);
 
-  // Log environment variable status for debugging
-  if (process.env.NODE_ENV === 'development') {
-    console.log('DATABASE_URL set:', !!process.env.DATABASE_URL)
-    if (process.env.DATABASE_URL) {
-      console.log('DATABASE_URL first 30 chars:', process.env.DATABASE_URL.substring(0, 30))
-      console.log('DATABASE_URL starts with postgresql://:', process.env.DATABASE_URL.startsWith('postgresql://'))
-    }
-  }
-
-  // Real-time pipeline: Socket.IO server + optional MQTT connector
+  // Real-time pipeline: Socket.IO server + MQTT/Influx from DB (Settings > Integrations)
   startSocketIOServer();
 
-  const enableMqtt = process.env.ENABLE_MQTT_CONNECTOR !== 'false';
-  const hasBroker = !!(process.env.MQTT_BROKER_URL || process.env.EMQX_BROKER_URL);
-  if (enableMqtt && hasBroker) {
+  const influxCfg = await getInfluxConfig();
+  setInfluxConfigCache(influxCfg);
+
+  if (process.env.ENABLE_MQTT_CONNECTOR !== 'false') {
     startMqttConnector(handleTagValue);
   }
 }

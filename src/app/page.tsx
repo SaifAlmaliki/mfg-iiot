@@ -13,6 +13,7 @@ import { MonitoringPanel } from '@/components/monitoring/monitoring-panel';
 import { EdgePanel } from '@/components/edge/edge-panel';
 import { SimulatorsPanel } from '@/components/simulators/simulators-panel';
 import { AdminPanel } from '@/components/admin/admin-panel';
+import { IntegrationsBanner } from '@/components/admin/integrations-banner';
 import { useNavigationStore } from '@/lib/store';
 import { useAuthStore } from '@/lib/auth-store';
 import { Toaster } from '@/components/ui/sonner';
@@ -109,7 +110,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-dvh bg-background">
       {(!isInitialized || !user) ? (
         <div className="flex items-center justify-center flex-1">
           <p className="text-muted-foreground">Loading…</p>
@@ -124,10 +125,11 @@ export default function Home() {
 
           {/* Main Content */}
           <main className={cn(
-            "flex-1 overflow-auto",
+            "flex-1 overflow-auto flex flex-col",
             isMobile && "pt-14" // Add top padding for mobile header
           )}>
-            {renderContent()}
+            <IntegrationsBanner />
+            <div className="flex-1">{renderContent()}</div>
           </main>
         </>
       )}

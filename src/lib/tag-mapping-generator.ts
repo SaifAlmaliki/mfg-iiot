@@ -5,8 +5,7 @@
  * for review before activation.
  */
 
-import { readFileSync, existsSync } from 'fs';
-import { join } from 'path';
+import { loadSimulatorsConfig } from '@/lib/simulators';
 
 export interface SimulatorTag {
   address: string;
@@ -90,7 +89,7 @@ function normalizeDataType(dataType: string): string {
 }
 
 export class TagMappingGenerator {
-  private configPath: string;
+  private configPath: string | undefined;
   private options: TagMappingGeneratorOptions;
 
   constructor(options: TagMappingGeneratorOptions, configPath?: string) {
@@ -98,40 +97,15 @@ export class TagMappingGenerator {
       defaultScanRate: 1000,
       ...options,
     };
-    
-    if (configPath) {
-      this.configPath = configPath;
-    } else {
-      this.configPath = this.findSimulatorsConfig();
-    }
-  }
-
-  private findSimulatorsConfig(): string {
-    const possiblePaths = [
-      join(process.cwd(), 'simulators', 'simulators.json'),
-      join(process.cwd(), '..', 'simulators', 'simulators.json'),
-      join(__dirname, '..', '..', '..', 'simulators', 'simulators.json'),
-    ];
-
-    for (const path of possiblePaths) {
-      if (existsSync(path)) {
-        return path;
-      }
-    }
-
-    throw new Error('Simulators configuration file not found');
+    this.configPath = configPath;
   }
 
   loadSimulators(): SimulatorConfig[] {
-    if (!existsSync(this.configPath)) {
-      console.warn(`[TagMappingGenerator] Config not found at ${this.configPath}`);
-      return [];
-    }
-
     try {
-      const content = readFileSync(this.configPath, 'utf-8');
-      const data = JSON.parse(content) as SimulatorsFile;
-      return data.simulators.filter(s => s.enabled !== false);
+      const { simulators } = loadSimulatorsConfig();
+      return (Array.isArray(simulators) ? simulators : []).filter(
+        (s) => (s as SimulatorConfig).enabled !== false
+      ) as SimulatorConfig[];
     } catch (error) {
       console.error('[TagMappingGenerator] Failed to load simulators config:', error);
       return [];
@@ -362,18 +336,4 @@ export function createTagMappingGenerator(
   return new TagMappingGenerator(options, configPath);
 }
 
-export function getSimulatorsConfigPath(): string {
-  const envPath = process.env.SIMULATORS_CONFIG_PATH;
-  if (envPath) return envPath;
-
-  const possiblePaths = [
-    join(process.cwd(), 'simulators', 'simulators.json'),
-    join(process.cwd(), '..', 'simulators', 'simulators.json'),
-  ];
-
-  for (const path of possiblePaths) {
-    if (existsSync(path)) return path;
-  }
-
-  return join(process.cwd(), 'simulators', 'simulators.json');
-}
+export { getSimulatorsConfigPath } from '@/lib/simulators';

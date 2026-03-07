@@ -27,9 +27,10 @@
     "db:reset": "prisma migrate reset",
     "db:seed": "bunx prisma db seed",
     "db:studio": "prisma studio",
-    "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down",
-    "docker:logs": "docker-compose logs -f"
+    "docker:up": "docker compose -f docker/docker-compose.yml up -d",
+    "docker:down": "docker compose -f docker/docker-compose.yml down",
+    "docker:logs": "docker compose -f docker/docker-compose.yml logs -f",
+    "docker:minimal": "docker compose -f docker/docker-compose.minimal.yml up -d"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

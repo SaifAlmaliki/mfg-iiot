@@ -13,18 +13,42 @@
 import mqtt, { MqttClient } from 'mqtt';
 import { PrismaClient } from '@prisma/client';
 
-// Configuration
-const MQTT_URL = process.env.MQTT_BROKER_URL || 'mqtt://localhost:1883';
 const HEALTH_PORT = 3110;
-
-// InfluxDB Configuration (optional - will work without it)
-const INFLUX_URL = process.env.INFLUXDB_URL || 'http://localhost:8086';
-const INFLUX_TOKEN = process.env.INFLUXDB_TOKEN || 'uns-platform-token';
-const INFLUX_ORG = process.env.INFLUXDB_ORG || 'uns-platform';
-const INFLUX_BUCKET = process.env.INFLUXDB_BUCKET || 'manufacturing';
+const CONFIG_POLL_MS = 30_000;
 
 // Initialize Prisma
 const prisma = new PrismaClient();
+
+export interface PlatformIntegrationsConfig {
+  mqtt: { url: string };
+  influx: { url: string; token: string; org: string; bucket: string } | null;
+}
+
+async function fetchPlatformConfig(): Promise<PlatformIntegrationsConfig | null> {
+  const rows = await prisma.systemConfig.findMany({
+    where: {
+      key: {
+        in: ['mqtt.broker.url', 'influxdb.url', 'influxdb.token', 'influxdb.org', 'influxdb.bucket'],
+      },
+    },
+    select: { key: true, value: true },
+  });
+  const get = (k: string) => {
+    const r = rows.find((x) => x.key === k)?.value;
+    return typeof r === 'string' ? r.trim() : null;
+  };
+  const mqttUrl = get('mqtt.broker.url');
+  if (!mqttUrl) return null;
+  const influxUrl = get('influxdb.url');
+  const influxToken = get('influxdb.token');
+  const influxOrg = get('influxdb.org');
+  const influxBucket = get('influxdb.bucket');
+  const influx =
+    influxUrl && influxToken && influxOrg && influxBucket
+      ? { url: influxUrl, token: influxToken, org: influxOrg, bucket: influxBucket }
+      : null;
+  return { mqtt: { url: mqttUrl }, influx };
+}
 
 // MQTT Client
 let mqttClient: MqttClient | null = null;
@@ -32,6 +56,8 @@ let mqttClient: MqttClient | null = null;
 // InfluxDB client (optional)
 let influxWriteApi: any = null;
 let influxEnabled = false;
+
+let lastConfig: PlatformIntegrationsConfig | null = null;
 
 // Stats
 const stats = {
@@ -42,29 +68,42 @@ const stats = {
 };
 
 // ============================================
-// InfluxDB Setup (Optional)
+// InfluxDB Setup (Optional) – config from DB
 // ============================================
 
-async function setupInfluxDB() {
+async function setupInfluxDB(config: NonNullable<PlatformIntegrationsConfig['influx']>) {
   try {
-    const { InfluxDB, Point } = await import('@influxdata/influxdb-client');
-    
-    const influxDB = new InfluxDB({ url: INFLUX_URL, token: INFLUX_TOKEN });
-    influxWriteApi = influxDB.getWriteApi(INFLUX_ORG, INFLUX_BUCKET, 'ms');
+    const { InfluxDB } = await import('@influxdata/influxdb-client');
+    const influxDB = new InfluxDB({ url: config.url, token: config.token });
+    influxWriteApi = influxDB.getWriteApi(config.org, config.bucket, 'ms');
     influxEnabled = true;
     console.log('[InfluxDB] Connected and ready');
   } catch (error) {
     console.log('[InfluxDB] Not available - data will be stored in PostgreSQL only');
     influxEnabled = false;
+    influxWriteApi = null;
   }
 }
 
+function teardownInfluxDB() {
+  influxWriteApi = null;
+  influxEnabled = false;
+}
+
 // ============================================
-// MQTT Connection
+// MQTT Connection – config from DB
 // ============================================
 
-function connectMQTT() {
-  mqttClient = mqtt.connect(MQTT_URL, {
+function disconnectMQTT() {
+  if (mqttClient) {
+    mqttClient.end();
+    mqttClient = null;
+    console.log('[MQTT] Disconnected');
+  }
+}
+
+function connectMQTT(mqttUrl: string) {
+  mqttClient = mqtt.connect(mqttUrl, {
     clientId: `data-persister-${Date.now()}`,
     clean: true,
     keepalive: 60,
@@ -728,20 +767,46 @@ setInterval(flushInfluxDB, 5000);
 // Start Service
 // ============================================
 
+async function applyConfig(config: PlatformIntegrationsConfig) {
+  if (config.influx) {
+    await setupInfluxDB(config.influx);
+  } else {
+    teardownInfluxDB();
+  }
+  disconnectMQTT();
+  connectMQTT(config.mqtt.url);
+}
+
 async function start() {
   console.log('[Data Persister] Starting...');
-  
-  // Test database connection
+
   await prisma.$connect();
   console.log('[DB] Connected to PostgreSQL');
 
-  // Setup InfluxDB (optional)
-  await setupInfluxDB();
+  const config = await fetchPlatformConfig();
+  if (!config) {
+    console.warn('[Data Persister] MQTT/Influx not configured in platform Settings > Integrations. Configure there and restart or wait for next poll.');
+  } else {
+    lastConfig = config;
+    if (config.influx) await setupInfluxDB(config.influx);
+    connectMQTT(config.mqtt.url);
+  }
 
-  // Connect to MQTT
-  connectMQTT();
+  setInterval(async () => {
+    const next = await fetchPlatformConfig();
+    if (!next) return;
+    const prev = lastConfig;
+    if (
+      !prev ||
+      prev.mqtt.url !== next.mqtt.url ||
+      JSON.stringify(prev.influx) !== JSON.stringify(next.influx)
+    ) {
+      console.log('[Data Persister] Config changed; reconnecting.');
+      lastConfig = next;
+      await applyConfig(next);
+    }
+  }, CONFIG_POLL_MS);
 
-  // Start health check server
   await startHealthServer();
 
   console.log('[Data Persister] Ready');

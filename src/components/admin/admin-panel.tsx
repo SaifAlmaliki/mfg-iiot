@@ -61,6 +61,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useNavigationStore } from '@/lib/store';
+import { IntegrationsSettings } from '@/components/admin/integrations-settings';
 
 // Types
 interface Site {
@@ -146,8 +148,25 @@ const permissionCategories = [
 const allPermissions = permissionCategories.flatMap(c => c.permissions);
 
 export function AdminPanel() {
-  // Tab state
+  const currentModule = useNavigationStore((s) => s.currentModule);
+  const setCurrentModule = useNavigationStore((s) => s.setCurrentModule);
+
+  // Tab state; sync with hash (admin/users -> users, admin/integrations -> integrations)
   const [activeTab, setActiveTab] = useState('users');
+
+  useEffect(() => {
+    if (currentModule === 'admin' || currentModule === 'admin/users') setActiveTab('users');
+    else if (currentModule === 'admin/roles') setActiveTab('roles');
+    else if (currentModule === 'admin/audit') setActiveTab('audit');
+    else if (currentModule === 'admin/integrations') setActiveTab('integrations');
+  }, [currentModule]);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    const hash = value === 'users' ? 'admin' : `admin/${value}`;
+    window.location.hash = hash;
+    setCurrentModule(value === 'users' ? 'admin' : `admin/${value}`);
+  };
   
   // Users state
   const [users, setUsers] = useState<User[]>([]);
@@ -580,16 +599,16 @@ export function AdminPanel() {
     });
   };
 
-  const getActionBadgeColor = (action: string) => {
+  const getActionBadgeVariant = (action: string): 'default' | 'secondary' | 'destructive' => {
     switch (action.toUpperCase()) {
       case 'CREATE':
-        return 'bg-green-500';
+        return 'default';
       case 'UPDATE':
-        return 'bg-blue-500';
+        return 'secondary';
       case 'DELETE':
-        return 'bg-red-500';
+        return 'destructive';
       default:
-        return 'bg-slate-500';
+        return 'secondary';
     }
   };
 
@@ -621,20 +640,21 @@ export function AdminPanel() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Users className="w-8 h-8 text-emerald-500" />
+          <h1 className="text-3xl font-bold flex items-center gap-2 text-balance">
+            <Users className="size-8 text-primary" />
             Administration
           </h1>
-          <p className="text-muted-foreground">User, role, and audit management</p>
+          <p className="text-muted-foreground text-pretty">User, role, and audit management</p>
         </div>
       </div>
 
       {/* Main Content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
         <TabsList>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="roles">Roles</TabsTrigger>
           <TabsTrigger value="audit">Audit Logs</TabsTrigger>
+          <TabsTrigger value="integrations">Integrations</TabsTrigger>
         </TabsList>
 
         {/* Users Tab */}
@@ -677,8 +697,8 @@ export function AdminPanel() {
                       <TableRow key={user.id}>
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
-                              <User className="w-4 h-4" />
+                            <div className="size-8 rounded-full bg-muted flex items-center justify-center">
+                              <User className="size-4" />
                             </div>
                             {user.name}
                           </div>
@@ -703,17 +723,14 @@ export function AdminPanel() {
                               checked={user.isActive}
                               onCheckedChange={() => handleUserActiveToggle(user)}
                             />
-                            <Badge 
-                              variant={user.isActive ? 'default' : 'secondary'} 
-                              className={user.isActive ? 'bg-green-500' : ''}
-                            >
+                            <Badge variant={user.isActive ? 'default' : 'secondary'}>
                               {user.isActive ? 'Active' : 'Inactive'}
                             </Badge>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Clock className="w-3 h-3" />
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground tabular-nums">
+                            <Clock className="size-3" aria-hidden />
                             {user.lastLogin 
                               ? new Date(user.lastLogin).toLocaleString() 
                               : 'Never'}
@@ -725,8 +742,9 @@ export function AdminPanel() {
                               size="sm" 
                               variant="ghost"
                               onClick={() => openEditUserDialog(user)}
+                              aria-label={`Edit ${user.name}`}
                             >
-                              <Edit className="w-4 h-4" />
+                              <Edit className="size-4" />
                             </Button>
                             <Button 
                               size="sm" 
@@ -736,8 +754,9 @@ export function AdminPanel() {
                                 setSelectedUser(user);
                                 setDeleteUserDialog(true);
                               }}
+                              aria-label={`Delete ${user.name}`}
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="size-4" />
                             </Button>
                           </div>
                         </TableCell>
@@ -920,7 +939,7 @@ export function AdminPanel() {
                             </TableCell>
                             <TableCell>{log.user?.name || 'System'}</TableCell>
                             <TableCell>
-                              <Badge className={getActionBadgeColor(log.action)}>
+                              <Badge variant={getActionBadgeVariant(log.action)}>
                                 {log.action}
                               </Badge>
                             </TableCell>
@@ -967,6 +986,11 @@ export function AdminPanel() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Integrations Tab */}
+        <TabsContent value="integrations" className="space-y-4">
+          <IntegrationsSettings />
         </TabsContent>
       </Tabs>
 

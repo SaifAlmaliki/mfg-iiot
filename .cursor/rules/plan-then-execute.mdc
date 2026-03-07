@@ -1,0 +1,40 @@
+---
+description: Plan-Then-Execute workflow — scan first, propose plan, implement only after approval
+alwaysApply: true
+---
+
+# Plan-Then-Execute Workflow
+
+Follow this sequence for any non-trivial coding task. Do **not** write implementation code until the plan is approved and you are highly confident.
+
+## 1. Scan Before Proposing
+
+- Search the codebase for existing components, utilities, APIs, and patterns that can be reused.
+- Identify where similar logic or UI already lives (e.g. `src/components/`, `src/lib/`, `src/app/api/`).
+- Note conventions (e.g. AGENTS.md, Prisma usage, shadcn/ui, Zustand/React Query).
+
+## 2. Propose, Don’t Implement Yet
+
+- Describe a **modular architecture** that reuses what you found and follows DRY.
+- Call out: what you’ll reuse, what you’ll add, and how it fits the current structure.
+- List concrete steps or tasks only at a high level — no full code yet.
+
+## 3. Ask Clarifying Questions
+
+- Surface ambiguities, edge cases, or choices (e.g. API shape, permissions, error handling).
+- Ask about scope, file patterns, or preferences if the request doesn’t specify them.
+
+## 4. Implement Only After Approval
+
+- Start coding **only after** the user has approved the plan (or confirmed answers to your questions).
+- Proceed when you are **at least ~95% confident** in the approach; if not, ask one more round of questions.
+
+## Examples
+
+**❌ Skip planning:** Diving straight into writing a new API route and components without checking for existing connectors or auth patterns.
+
+**✅ Plan first:** “I found `src/app/api/connectors/` and `@/lib/auth-config`. I propose reusing the same auth and error pattern, adding a single new route under `api/connectors/[id]/...`. Questions: 1) … 2) … Should I proceed with this?”
+
+**❌ Implement before approval:** Posting a long code block and then asking “does this look good?”
+
+**✅ Get approval then code:** “Here’s the plan and the 2 questions above. Once you confirm, I’ll implement the route and the UI changes.”

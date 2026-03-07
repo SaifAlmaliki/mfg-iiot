@@ -1,0 +1,92 @@
+# Minimal stack for local dev: Postgres + EMQX + InfluxDB only.
+# Run the app and connector from host: npm run dev, npm run connector.
+#
+# From repo root:
+#   docker compose -f docker/docker-compose.minimal.yml up -d
+#
+# Then in the app: set DATABASE_URL=postgresql://uns_user:uns_password@localhost:5432/uns_manufacturing?schema=public
+# and in Settings > Integrations set:
+#   MQTT URL: mqtt://localhost:1883
+#   InfluxDB URL: http://localhost:8086, token: uns-platform-super-secret-token, org: uns-platform, bucket: manufacturing
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: uns-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: uns_user
+      POSTGRES_PASSWORD: uns_password
+      POSTGRES_DB: uns_manufacturing
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U uns_user -d uns_manufacturing"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - uns-network
+
+  influxdb:
+    image: influxdb:2.7
+    container_name: uns-influxdb
+    restart: unless-stopped
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: adminpassword
+      DOCKER_INFLUXDB_INIT_ORG: uns-platform
+      DOCKER_INFLUXDB_INIT_BUCKET: manufacturing
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: uns-platform-super-secret-token
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+      - influxdb_config:/etc/influxdb2
+    ports:
+      - "8086:8086"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - uns-network
+
+  emqx:
+    image: emqx/emqx:5.8.0
+    container_name: uns-emqx
+    restart: unless-stopped
+    environment:
+      EMQX_NODE_NAME: emqx@0.0.0.0
+      EMQX_DASHBOARD__DEFAULT_USERNAME: admin
+      EMQX_DASHBOARD__DEFAULT_PASSWORD: uns_emqx_2024
+      EMQX_LISTENERS__TCP__DEFAULT__BIND: "0.0.0.0:1883"
+      EMQX_LISTENERS__WS__DEFAULT__BIND: "0.0.0.0:8083"
+    ports:
+      - "1883:1883"
+      - "8083:8083"
+      - "18083:18083"
+    healthcheck:
+      test: ["CMD", "emqx", "ctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - uns-network
+
+networks:
+  uns-network:
+    driver: bridge
+    name: uns-network
+
+volumes:
+  postgres_data:
+    name: uns-postgres-data
+  influxdb_data:
+    name: uns-influxdb-data
+  influxdb_config:
+    name: uns-influxdb-config
+  emqx_data:
+    name: uns-emqx-data
