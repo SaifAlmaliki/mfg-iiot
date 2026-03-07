@@ -12,7 +12,6 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { WebSocketServer, WebSocket } from 'ws';
-import http from 'http';
 import mqtt, { MqttClient } from 'mqtt';
 import { PrismaClient } from '@prisma/client';
 
@@ -103,7 +102,7 @@ app.get('/api/enterprises', async (_req: Request, res: Response) => {
       include: { sites: true },
     });
     res.json(enterprises);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch enterprises' });
   }
 });
@@ -116,7 +115,7 @@ app.get('/api/enterprises/:id', async (req: Request, res: Response) => {
     });
     if (!enterprise) return res.status(404).json({ error: 'Enterprise not found' });
     res.json(enterprise);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch enterprise' });
   }
 });
@@ -130,7 +129,7 @@ app.get('/api/sites', async (req: Request, res: Response) => {
       include: { enterprise: true, areas: true },
     });
     res.json(sites);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch sites' });
   }
 });
@@ -148,7 +147,7 @@ app.get('/api/sites/:id', async (req: Request, res: Response) => {
     });
     if (!site) return res.status(404).json({ error: 'Site not found' });
     res.json(site);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch site' });
   }
 });
@@ -162,7 +161,7 @@ app.get('/api/areas', async (req: Request, res: Response) => {
       include: { site: true, workCenters: true },
     });
     res.json(areas);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch areas' });
   }
 });
@@ -176,7 +175,7 @@ app.get('/api/workcenters', async (req: Request, res: Response) => {
       include: { area: true, workUnits: true, equipment: true },
     });
     res.json(workCenters);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch work centers' });
   }
 });
@@ -195,7 +194,7 @@ app.get('/api/workcenters/:id', async (req: Request, res: Response) => {
     });
     if (!workCenter) return res.status(404).json({ error: 'Work center not found' });
     res.json(workCenter);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch work center' });
   }
 });
@@ -209,7 +208,7 @@ app.get('/api/workunits', async (req: Request, res: Response) => {
       include: { workCenter: true, equipment: true, tags: true },
     });
     res.json(workUnits);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch work units' });
   }
 });
@@ -230,7 +229,7 @@ app.get('/api/equipment', async (req: Request, res: Response) => {
       include: { workCenter: true, workUnit: true, tags: true },
     });
     res.json(equipment);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch equipment' });
   }
 });
@@ -250,7 +249,7 @@ app.get('/api/equipment/:id', async (req: Request, res: Response) => {
     });
     if (!equipment) return res.status(404).json({ error: 'Equipment not found' });
     res.json(equipment);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch equipment' });
   }
 });
@@ -271,7 +270,7 @@ app.get('/api/tags', async (req: Request, res: Response) => {
       include: { workUnit: true, equipment: true, alarmDefinitions: true },
     });
     res.json(tags);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch tags' });
   }
 });
@@ -289,7 +288,7 @@ app.get('/api/tags/:id', async (req: Request, res: Response) => {
     });
     if (!tag) return res.status(404).json({ error: 'Tag not found' });
     res.json(tag);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch tag' });
   }
 });
@@ -308,7 +307,7 @@ app.get('/api/tags/:id/values', async (req: Request, res: Response) => {
       take: Number(limit),
     });
     res.json(values);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch tag values' });
   }
 });
@@ -339,7 +338,7 @@ app.post('/api/tags/:id/write', async (req: Request, res: Response) => {
     await mqttClient?.publishAsync(topic, JSON.stringify(message), { qos: 1 });
     
     res.json({ success: true, topic, message });
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to write tag value' });
   }
 });
@@ -363,7 +362,7 @@ app.get('/api/alarms', async (req: Request, res: Response) => {
       take: 100,
     });
     res.json(alarms);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch alarms' });
   }
 });
@@ -381,7 +380,7 @@ app.post('/api/alarms/:id/acknowledge', async (req: Request, res: Response) => {
       include: { definition: { include: { tag: true } } },
     });
     res.json(alarm);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to acknowledge alarm' });
   }
 });
@@ -407,7 +406,7 @@ app.get('/api/orders', async (req: Request, res: Response) => {
       orderBy: { createdAt: 'desc' },
     });
     res.json(orders);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch orders' });
   }
 });
@@ -424,7 +423,7 @@ app.get('/api/orders/:id', async (req: Request, res: Response) => {
     });
     if (!order) return res.status(404).json({ error: 'Order not found' });
     res.json(order);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch order' });
   }
 });
@@ -446,7 +445,7 @@ app.get('/api/runs', async (req: Request, res: Response) => {
       orderBy: { createdAt: 'desc' },
     });
     res.json(runs);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch runs' });
   }
 });
@@ -467,7 +466,7 @@ app.get('/api/runs/:id', async (req: Request, res: Response) => {
     });
     if (!run) return res.status(404).json({ error: 'Run not found' });
     res.json(run);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch run' });
   }
 });
@@ -498,7 +497,7 @@ app.post('/api/runs/:id/command', async (req: Request, res: Response) => {
     await mqttClient?.publishAsync(topic, JSON.stringify(message), { qos: 1 });
     
     res.json({ success: true, topic, message });
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to send command' });
   }
 });
@@ -515,7 +514,7 @@ app.get('/api/recipes', async (req: Request, res: Response) => {
       include: { product: true, recipeMaterials: { include: { material: true } } },
     });
     res.json(recipes);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch recipes' });
   }
 });
@@ -532,7 +531,7 @@ app.get('/api/recipes/:id', async (req: Request, res: Response) => {
     });
     if (!recipe) return res.status(404).json({ error: 'Recipe not found' });
     res.json(recipe);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch recipe' });
   }
 });
@@ -549,7 +548,7 @@ app.get('/api/products', async (req: Request, res: Response) => {
       include: { recipes: true, materialLots: true },
     });
     res.json(products);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch products' });
   }
 });
@@ -566,7 +565,7 @@ app.get('/api/lots', async (req: Request, res: Response) => {
       orderBy: { receivedDate: 'desc' },
     });
     res.json(lots);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch lots' });
   }
 });
@@ -601,7 +600,7 @@ app.get('/api/lots/:id/genealogy', async (req: Request, res: Response) => {
         timestamp: r.timestamp,
       })),
     });
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch genealogy' });
   }
 });
@@ -622,7 +621,7 @@ app.get('/api/connectors', async (req: Request, res: Response) => {
       include: { site: true, tags: true },
     });
     res.json(connectors);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch connectors' });
   }
 });
@@ -640,7 +639,7 @@ app.get('/api/connectors/:id', async (req: Request, res: Response) => {
     });
     if (!connector) return res.status(404).json({ error: 'Connector not found' });
     res.json(connector);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch connector' });
   }
 });
@@ -652,7 +651,7 @@ app.post('/api/connectors', async (req: Request, res: Response) => {
       data: req.body,
     });
     res.status(201).json(connector);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to create connector' });
   }
 });
@@ -664,7 +663,7 @@ app.put('/api/connectors/:id', async (req: Request, res: Response) => {
       data: req.body,
     });
     res.json(connector);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to update connector' });
   }
 });
@@ -687,7 +686,7 @@ app.get('/api/oee', async (req: Request, res: Response) => {
       take: 168, // Last week hourly
     });
     res.json(records);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch OEE records' });
   }
 });
@@ -702,7 +701,7 @@ app.get('/api/users', async (req: Request, res: Response) => {
       include: { site: true, userRoles: { include: { role: true } } },
     });
     res.json(users);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch users' });
   }
 });
@@ -718,7 +717,7 @@ app.get('/api/config', async (req: Request, res: Response) => {
       where: category ? { category: String(category) } : undefined,
     });
     res.json(configs.reduce((acc, c) => ({ ...acc, [c.key]: c.value }), {}));
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch config' });
   }
 });
@@ -737,7 +736,7 @@ app.post('/api/mqtt/publish', async (req: Request, res: Response) => {
 
     await mqttClient.publishAsync(topic, JSON.stringify(message), { qos, retain });
     res.json({ success: true, topic });
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to publish message' });
   }
 });
@@ -771,7 +770,7 @@ app.get('/api/dashboard/overview', async (req: Request, res: Response) => {
       onlineConnectors: connectors,
       timestamp: new Date().toISOString(),
     });
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch dashboard data' });
   }
 });
@@ -832,7 +831,7 @@ wsServer.on('connection', (ws: WebSocket) => {
           ws.send(JSON.stringify({ type: 'pong', timestamp: new Date().toISOString() }));
           break;
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('[WS] Message parse error:', error);
     }
   });
@@ -866,7 +865,7 @@ async function start() {
       console.log(`[API] REST API listening on port ${API_PORT}`);
       console.log(`[WS] WebSocket server listening on port ${WS_PORT}`);
     });
-  } catch (error) {
+  } catch (_error) {
     console.error('[Startup] Error:', error);
     process.exit(1);
   }

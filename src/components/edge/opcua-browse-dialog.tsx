@@ -65,10 +65,21 @@ export function OpcuaBrowseDialog({
     setNodes([]);
     setSelected(new Set());
 
+    const trimmed = endpoint.trim();
+    if (!/^opc\.tcp:\/\/[^/]+:\d+/.test(trimmed)) {
+      setError('Endpoint must be opc.tcp://host:port (e.g. opc.tcp://localhost:4840)');
+      setLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
+
     fetch('/api/opcua/browse', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ endpoint: endpoint.trim(), variablesOnly: true }),
+      body: JSON.stringify({ endpoint: trimmed, variablesOnly: true }),
+      signal: controller.signal,
     })
       .then((res) => {
         if (!res.ok) return res.json().then((d) => Promise.reject(new Error(d.error || 'Browse failed')));
@@ -79,8 +90,17 @@ export function OpcuaBrowseDialog({
           setNodes(data.nodes);
         }
       })
-      .catch((err) => setError(err.message || 'Failed to browse'))
-      .finally(() => setLoading(false));
+      .catch((err) => {
+        if (err.name === 'AbortError') {
+          setError('Browse timed out. Check that the OPC UA server is running and the endpoint is correct (e.g. opc.tcp://localhost:4840).');
+        } else {
+          setError(err.message || 'Failed to browse');
+        }
+      })
+      .finally(() => {
+        clearTimeout(timeoutId);
+        setLoading(false);
+      });
   }, [open, endpoint]);
 
   const toggle = (nodeId: string) => {

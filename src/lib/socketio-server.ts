@@ -12,7 +12,6 @@ const TAG_ROOM_PREFIX = 'tag:';
 const RUN_ROOM_PREFIX = 'run:';
 
 declare global {
-  // eslint-disable-next-line no-var
   var __socketio: Server | undefined;
 }
 

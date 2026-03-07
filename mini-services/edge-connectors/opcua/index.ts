@@ -18,8 +18,6 @@ import {
   ClientMonitoredItem,
   AttributeIds,
   DataType,
-  DataValue,
-  NodeId,
   MessageSecurityMode,
   SecurityPolicy,
 } from 'node-opcua';
@@ -95,8 +93,7 @@ function connectMQTT() {
 
 async function handleMQTTMessage(topic: string, payload: Buffer) {
   const message = JSON.parse(payload.toString());
-  const topicParts = topic.split('/');
-  
+
   if (topic.includes('/setpoint/')) {
     // Write to OPC UA
     const nodeId = message.nodeId || message.tagId;
@@ -396,7 +393,7 @@ setInterval(sendHeartbeat, 30000);
 // ============================================
 
 async function startHealthServer() {
-  const server = Bun.serve({
+  Bun.serve({
     port: HEALTH_PORT,
     async fetch(req) {
       const url = new URL(req.url);

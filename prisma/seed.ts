@@ -1171,7 +1171,9 @@ async function seedSystemConfig() {
   console.log('⚙️ Seeding System Configuration...');
   
   const configs = [
-    { key: 'mqtt.broker.url', value: 'mqtt://emqx:1883', description: 'MQTT broker URL', category: 'mqtt' },
+    // Use localhost so connector-gateway and app on host work with docker-compose.minimal (EMQX on 1883).
+    // For full Docker stack, set in Settings > Integrations to mqtt://emqx:1883.
+    { key: 'mqtt.broker.url', value: 'mqtt://localhost:1883', description: 'MQTT broker URL', category: 'mqtt' },
     { key: 'mqtt.client.id', value: 'uns-platform-app', description: 'MQTT client ID', category: 'mqtt' },
     { key: 'mqtt.broker.ws', value: 'ws://localhost:8083/mqtt', description: 'MQTT WebSocket URL', category: 'mqtt' },
     { key: 'influxdb.url', value: 'http://influxdb:8086', description: 'InfluxDB URL', category: 'influxdb' },

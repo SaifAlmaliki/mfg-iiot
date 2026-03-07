@@ -55,7 +55,7 @@ broker.on('clientDisconnect', (client: any) => {
   broadcastStatus();
 });
 
-broker.on('publish', (packet: any, client: any) => {
+broker.on('publish', (packet: any, _client: any) => {
   stats.totalMessages++;
   const topic = packet.topic;
   const count = stats.messagesPerTopic.get(topic) || 0;
@@ -93,7 +93,7 @@ server.listen(PORT, () => {
 const httpServer = createHttpServer();
 const wsServer = new WebSocketServer({ server: httpServer });
 
-wsServer.on('connection', (ws, req) => {
+wsServer.on('connection', (ws, _req) => {
   console.log(`[MQTT-WS] WebSocket client connected`);
   
   // Simple protocol for WebSocket clients

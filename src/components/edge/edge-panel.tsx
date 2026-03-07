@@ -176,6 +176,7 @@ export function EdgePanel() {
   const [testResultDialog, setTestResultDialog] = useState(false);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
   const [testingConnector, setTestingConnector] = useState<string | null>(null);
+  const [testingEndpoint, setTestingEndpoint] = useState(false);
   
   // Tag Mappings state
   const [mappings, setMappings] = useState<TagMapping[]>([]);
@@ -213,6 +214,10 @@ export function EdgePanel() {
     siteId: '',
     heartbeatRate: '30',
     version: '',
+  });
+  const [connectorFormInlineMapping, setConnectorFormInlineMapping] = useState({
+    sourceAddress: '',
+    tagId: '',
   });
   
   // Mapping form state
@@ -343,6 +348,7 @@ export function EdgePanel() {
       heartbeatRate: '30',
       version: '',
     });
+    setConnectorFormInlineMapping({ sourceAddress: '', tagId: '' });
     setConnectorFormErrors({});
   };
 
@@ -365,6 +371,7 @@ export function EdgePanel() {
       heartbeatRate: String(connector.heartbeatRate),
       version: connector.version || '',
     });
+    setConnectorFormInlineMapping({ sourceAddress: '', tagId: '' });
     setConnectorFormMode('edit');
     setSelectedConnector(connector);
     setConnectorFormErrors({});
@@ -429,6 +436,31 @@ export function EdgePanel() {
         throw new Error(error.error || 'Failed to save connector');
       }
       
+      const savedConnector = await response.json();
+      const connectorId = savedConnector?.id ?? selectedConnector?.id;
+      
+      if (
+        connectorForm.type === 'OPC_UA' &&
+        connectorId &&
+        connectorFormInlineMapping.sourceAddress.trim() &&
+        connectorFormInlineMapping.tagId
+      ) {
+        const mapRes = await fetch('/api/tag-mappings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            connectorId,
+            sourceAddress: connectorFormInlineMapping.sourceAddress.trim(),
+            sourceType: 'TAG',
+            tagId: connectorFormInlineMapping.tagId,
+          }),
+        });
+        if (!mapRes.ok) {
+          const mapErr = await mapRes.json();
+          toast.warning(`Connector saved but mapping failed: ${mapErr.error || 'Unknown error'}`);
+        }
+      }
+      
       toast.success(connectorFormMode === 'create' 
         ? 'Connector created successfully' 
         : 'Connector updated successfully');
@@ -460,6 +492,44 @@ export function EdgePanel() {
       toast.error('Failed to test connection');
     } finally {
       setTestingConnector(null);
+    }
+  };
+
+  const handleTestEndpoint = async () => {
+    const endpoint = connectorForm.endpoint.trim();
+    if (!endpoint) {
+      toast.error('Enter an endpoint first');
+      return;
+    }
+    if (!/^opc\.tcp:\/\//i.test(endpoint)) {
+      toast.error('Endpoint must start with opc.tcp://');
+      return;
+    }
+    setTestingEndpoint(true);
+    try {
+      let config: Record<string, unknown> | undefined;
+      if (connectorForm.config.trim()) {
+        try {
+          config = JSON.parse(connectorForm.config) as Record<string, unknown>;
+        } catch {
+          toast.error('Configuration JSON is invalid');
+          setTestingEndpoint(false);
+          return;
+        }
+      }
+      const response = await fetch('/api/opcua/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endpoint, config }),
+      });
+      const result = await response.json();
+      setTestResult(result);
+      setTestResultDialog(true);
+    } catch (error) {
+      console.error('Error testing endpoint:', error);
+      toast.error('Failed to test endpoint');
+    } finally {
+      setTestingEndpoint(false);
     }
   };
 
@@ -1248,15 +1318,27 @@ export function EdgePanel() {
                     placeholder="opc.tcp://192.168.1.10:4840"
                   />
                   {connectorForm.type === 'OPC_UA' && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setConnectorForm((f) => ({ ...f, endpoint: 'opc.tcp://localhost:4840' }))}
-                      title="Use local OPC UA server (e.g. simulator)"
-                    >
-                      Local
-                    </Button>
+                    <>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setConnectorForm((f) => ({ ...f, endpoint: 'opc.tcp://localhost:4840' }))}
+                        title="Use local OPC UA server (e.g. simulator)"
+                      >
+                        Local
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleTestEndpoint}
+                        disabled={testingEndpoint || !connectorForm.endpoint.trim()}
+                        title="Test connection before saving"
+                      >
+                        {testingEndpoint ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Test endpoint'}
+                      </Button>
+                    </>
                   )}
                   {connectorForm.type === 'MODBUS_TCP' && (
                     <Button
@@ -1335,6 +1417,45 @@ export function EdgePanel() {
                 <p className="text-sm text-destructive">{connectorFormErrors.config}</p>
               )}
             </div>
+
+            {connectorForm.type === 'OPC_UA' && (
+              <div className="space-y-3 rounded-lg border p-4 bg-muted/30">
+                <p className="text-sm font-medium">Add a tag mapping (optional)</p>
+                <p className="text-xs text-muted-foreground">
+                  Add at least one mapping so the connector gateway can connect and stream data. You can also use Browse after saving.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="inlineMappingSource">Source address (Node ID)</Label>
+                    <Input
+                      id="inlineMappingSource"
+                      value={connectorFormInlineMapping.sourceAddress}
+                      onChange={(e) => setConnectorFormInlineMapping((m) => ({ ...m, sourceAddress: e.target.value }))}
+                      placeholder="e.g. ns=3;s=MyVariable"
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="inlineMappingTag">Tag</Label>
+                    <Select
+                      value={connectorFormInlineMapping.tagId}
+                      onValueChange={(value) => setConnectorFormInlineMapping((m) => ({ ...m, tagId: value }))}
+                    >
+                      <SelectTrigger id="inlineMappingTag">
+                        <SelectValue placeholder="Select tag" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {tags.map((tag) => (
+                          <SelectItem key={tag.id} value={tag.id}>
+                            {tag.name} {tag.dataType ? `(${tag.dataType})` : ''}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <DialogFooter>
@@ -1578,6 +1699,21 @@ export function EdgePanel() {
                 </p>
               </div>
             </div>
+
+            {testResult?.details?.readValue != null && (
+              <div className="rounded-md border bg-muted/50 p-3">
+                <p className="text-sm text-muted-foreground mb-1">Read value</p>
+                <p className="text-base font-medium">
+                  Value: <span className="font-mono">{String(testResult.details.readValue.value)}</span>
+                  {testResult.details.readValue.dataType && (
+                    <span className="ml-2 text-muted-foreground">({testResult.details.readValue.dataType})</span>
+                  )}
+                </p>
+                {testResult.details.readValue.statusCode && (
+                  <p className="text-xs text-muted-foreground mt-1">Status: {testResult.details.readValue.statusCode}</p>
+                )}
+              </div>
+            )}
             
             {testResult?.details && (
               <div>

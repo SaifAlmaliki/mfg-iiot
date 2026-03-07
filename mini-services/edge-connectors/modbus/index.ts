@@ -167,7 +167,7 @@ async function startPolling() {
     for (const mapping of tagMappings) {
       try {
         await pollModbusAddress(mapping);
-      } catch (error) {
+      } catch (_error) {
         stats.errors++;
       }
     }
@@ -383,7 +383,7 @@ setInterval(sendHeartbeat, 30000);
 // ============================================
 
 async function startHealthServer() {
-  const server = Bun.serve({
+  Bun.serve({
     port: HEALTH_PORT,
     async fetch(req) {
       const url = new URL(req.url);

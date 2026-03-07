@@ -176,7 +176,7 @@ function broadcast(data: any) {
 }
 
 // Handle WebSocket connection
-wss.on('connection', (ws, req) => {
+wss.on('connection', (ws, _req) => {
   const clientId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   console.log(`[BRIDGE] Client connected: ${clientId}`);
   clients.add(ws);

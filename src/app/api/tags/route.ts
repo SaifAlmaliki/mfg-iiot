@@ -10,13 +10,13 @@ export async function GET(request: NextRequest) {
     
     const tags = await db.tag.findMany({
       where: {
-        ...(unitId && { unitId }),
+        ...(unitId && { workUnitId: unitId }),
         ...(equipmentId && { equipmentId })
       },
       include: {
-        unit: { select: { name: true, code: true } },
+        workUnit: { select: { name: true, code: true } },
         equipment: { select: { name: true, code: true } },
-        values: {
+        tagValues: {
           orderBy: { timestamp: 'desc' },
           take: 1
         }
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json(tags.map(tag => ({
       ...tag,
-      currentValue: tag.values[0] || null
+      currentValue: tag.tagValues[0] || null
     })));
   } catch (error) {
     console.error('Error fetching tags:', error);
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, address, dataType, engUnit, description, scanRate, minVal, maxVal, deadband, isWritable, unitId, equipmentId } = body;
+    const { name, address, dataType, engUnit, description, scanRate, minVal, maxVal, deadband, isWritable, unitId, workUnitId, equipmentId } = body;
     
     const tag = await db.tag.create({
       data: {
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
         maxVal,
         deadband,
         isWritable: isWritable || false,
-        unitId,
+        workUnitId: workUnitId ?? unitId,
         equipmentId
       }
     });

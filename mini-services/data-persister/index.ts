@@ -78,7 +78,7 @@ async function setupInfluxDB(config: NonNullable<PlatformIntegrationsConfig['inf
     influxWriteApi = influxDB.getWriteApi(config.org, config.bucket, 'ms');
     influxEnabled = true;
     console.log('[InfluxDB] Connected and ready');
-  } catch (error) {
+  } catch (_error) {
     console.log('[InfluxDB] Not available - data will be stored in PostgreSQL only');
     influxEnabled = false;
     influxWriteApi = null;
@@ -305,7 +305,7 @@ async function processEquipmentStatus(
 async function processBatchState(
   topic: string,
   message: any,
-  context: { enterprise: string; site: string; area: string; workCenter: string }
+  _context: { enterprise: string; site: string; area: string; workCenter: string }
 ) {
   if (message.batchId && message.state) {
     // Record state transition
@@ -384,7 +384,7 @@ async function processHeartbeat(
 async function checkAlarmConditions(
   tag: any,
   value: string,
-  context: { enterprise: string; site: string; area: string; workCenter: string; workUnit: string }
+  _context: { enterprise: string; site: string; area: string; workCenter: string; workUnit: string }
 ) {
   const numericValue = parseFloat(value);
   if (isNaN(numericValue)) return;
@@ -716,7 +716,7 @@ async function writeToInfluxDB(
 // ============================================
 
 async function startHealthServer() {
-  const server = Bun.serve({
+  Bun.serve({
     port: HEALTH_PORT,
     async fetch(req) {
       const url = new URL(req.url);

@@ -67,7 +67,7 @@ function connectMQTT() {
     try {
       await handleMQTTMessage(topic, payload);
       stats.messagesReceived++;
-    } catch (error) {
+    } catch (_error) {
       stats.errors++;
     }
   });
@@ -87,7 +87,7 @@ async function handleMQTTMessage(topic: string, payload: Buffer) {
       try {
         await writeS7Address(mapping.sourceAddress, message.value);
         console.log(`[S7] Wrote ${message.value} to ${mapping.sourceAddress}`);
-      } catch (error) {
+      } catch (_error) {
         console.error(`[S7] Write error:`, error);
       }
     }
@@ -122,7 +122,7 @@ async function connectS7() {
     });
 
     s7Client.connectTo(S7_HOST, S7_RACK, S7_SLOT);
-  } catch (error) {
+  } catch (_error) {
     console.log('[S7] node-snap7 not available, running simulation');
     await startSimulation();
   }
@@ -230,7 +230,7 @@ async function startPolling() {
         }
         
         publishValue(mapping.tag.mqttTopic, finalValue, quality);
-      } catch (error) {
+      } catch (_error) {
         stats.errors++;
       }
     }
@@ -352,7 +352,7 @@ async function updateConnectorStatus(status: string) {
         lastSeen: new Date(),
       },
     });
-  } catch (error) {
+  } catch (_error) {
     console.error('[DB] Failed to update status:', error);
   }
 }
@@ -393,7 +393,7 @@ setInterval(sendHeartbeat, 30000);
 // ============================================
 
 async function startHealthServer() {
-  const server = Bun.serve({
+  Bun.serve({
     port: HEALTH_PORT,
     async fetch(req) {
       const url = new URL(req.url);
