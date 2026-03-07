@@ -34,14 +34,22 @@ interface SimulatorDiscoveryDialogProps {
 function getSimulatorIcon(type: string) {
   switch (type) {
     case 'opcua':
-      return <Cpu className="w-5 h-5 text-blue-500" />;
+      return <Cpu className="size-5 text-blue-500" aria-hidden />;
     case 'modbus':
-      return <Zap className="w-5 h-5 text-amber-500" />;
+      return <Zap className="size-5 text-amber-500" aria-hidden />;
     case 'energymeter':
-      return <Gauge className="w-5 h-5 text-green-500" />;
+      return <Gauge className="size-5 text-green-500" aria-hidden />;
     default:
-      return <Cpu className="w-5 h-5 text-gray-500" />;
+      return <Cpu className="size-5 text-muted-foreground" aria-hidden />;
   }
+}
+
+function formatType(type: string): string {
+  const t = (type || '').toLowerCase();
+  if (t === 'energymeter') return 'Energy meter';
+  if (t === 'opcua') return 'OPC UA';
+  if (t === 'modbus') return 'Modbus';
+  return (type || '').toUpperCase();
 }
 
 export function SimulatorDiscoveryDialog({
@@ -97,70 +105,84 @@ export function SimulatorDiscoveryDialog({
     }
   };
 
+  const handleCardKeyDown = (e: React.KeyboardEvent, id: string) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setSelectedSimulator(id);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Discover Simulator Tags</DialogTitle>
-          <DialogDescription>
+      <DialogContent
+        className={cn(
+          'flex max-h-[85dvh] w-[calc(100vw-2rem)] max-w-[min(56rem,calc(100vw-2rem))] flex-col overflow-hidden p-4 sm:p-6',
+        )}
+      >
+        <DialogHeader className="shrink-0">
+          <DialogTitle className="text-balance">Discover Simulator Tags</DialogTitle>
+          <DialogDescription className="text-pretty">
             Select a simulator to discover available tags and generate ISA-95 compliant mappings.
           </DialogDescription>
         </DialogHeader>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+          <div className="flex shrink-0 items-center justify-center py-8" role="status" aria-live="polite">
+            <Loader2 className="size-8 animate-spin text-muted-foreground" aria-hidden />
+            <span className="sr-only">Loading simulators…</span>
           </div>
         ) : simulators.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
+          <div className="shrink-0 py-8 text-center text-pretty text-muted-foreground">
             No simulators found. Check simulator config (simulators/modbus.json, opcua.json, energy.json).
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {simulators.map((simulator) => (
-                <Card
-                  key={simulator.id}
-                  className={cn(
-                    'cursor-pointer transition-all hover:shadow-md',
-                    selectedSimulator === simulator.id && 'ring-2 ring-emerald-500'
-                  )}
-                  onClick={() => setSelectedSimulator(simulator.id)}
-                >
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {getSimulatorIcon(simulator.type)}
-                        <CardTitle className="text-sm">{simulator.name}</CardTitle>
-                      </div>
-                      <Badge variant={simulator.status === 'running' ? 'default' : 'secondary'}>
-                        {simulator.status || 'stopped'}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-2">
-                    <div className="space-y-1 text-xs">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Type</span>
-                        <span className="font-medium">{simulator.type.toUpperCase()}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Port</span>
-                        <span className="font-mono">{simulator.port}</span>
-                      </div>
-                      {simulator.productionLine && (
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Line</span>
-                          <span>{simulator.productionLine}</span>
-                        </div>
+            <div className="min-h-0 min-w-0 flex-1 overflow-auto -mx-1 px-1" role="list" aria-label="Simulators">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+                {simulators.map((simulator) => {
+                  const isSelected = selectedSimulator === simulator.id;
+                  return (
+                    <Card
+                      key={simulator.id}
+                      role="button"
+                      tabIndex={0}
+                      aria-pressed={isSelected}
+                      aria-label={`${simulator.name}, ${formatType(simulator.type)}, port ${simulator.port}, ${simulator.status || 'stopped'}`}
+                      className={cn(
+                        'min-w-0 cursor-pointer border-2 py-4 transition-[box-shadow,border-color] duration-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                        isSelected ? 'border-primary shadow-md' : 'border-border',
                       )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                      onClick={() => setSelectedSimulator(simulator.id)}
+                      onKeyDown={(e) => handleCardKeyDown(e, simulator.id)}
+                    >
+                      <CardHeader className="space-y-2 px-4 pb-2 pt-0">
+                        <CardTitle className="line-clamp-2 text-sm font-medium leading-snug text-foreground">
+                          {simulator.name}
+                        </CardTitle>
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                          {getSimulatorIcon(simulator.type)}
+                          <span className="text-muted-foreground">
+                            <span className="font-medium text-foreground">{formatType(simulator.type)}</span>
+                            <span className="tabular-nums font-mono"> · {simulator.port}</span>
+                          </span>
+                          <Badge variant={simulator.status === 'running' ? 'default' : 'secondary'} className="ml-auto shrink-0 text-xs">
+                            {simulator.status || 'stopped'}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      {simulator.productionLine && (
+                        <CardContent className="px-4 pt-0 text-xs text-muted-foreground">
+                          <span className="shrink-0">Line </span>
+                          <span>{simulator.productionLine}</span>
+                        </CardContent>
+                      )}
+                    </Card>
+                  );
+                })}
+              </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-4 border-t">
+            <div className="flex shrink-0 flex-wrap justify-end gap-2 border-t pt-4">
               <Button variant="outline" onClick={onClose}>
                 Cancel
               </Button>
@@ -170,13 +192,13 @@ export function SimulatorDiscoveryDialog({
               >
                 {isDiscovering ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Discovering...
+                    <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
+                    <span>Discovering…</span>
                   </>
                 ) : (
                   <>
-                    <Search className="w-4 h-4 mr-2" />
-                    Discover Tags
+                    <Search className="size-4 shrink-0" aria-hidden />
+                    <span>Discover Tags</span>
                   </>
                 )}
               </Button>

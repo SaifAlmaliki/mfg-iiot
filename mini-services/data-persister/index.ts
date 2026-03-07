@@ -9,6 +9,7 @@
  * 
  * Port: 3110 (Health check API)
  */
+/// <reference types="bun-types" />
 
 import mqtt, { MqttClient } from 'mqtt';
 import { PrismaClient } from '@prisma/client';
@@ -177,7 +178,8 @@ async function processMessage(topic: string, payload: Buffer) {
   const attribute = attributeParts.join('/');
 
   // Determine message category and process accordingly
-  if (attribute.includes('/value') || attribute.includes('/setpoint')) {
+  // Treat as telemetry: explicit /value or /setpoint, or any 6+ part ISA-95 topic (connector publishes tag values on 6-part topic)
+  if (attribute.includes('/value') || attribute.includes('/setpoint') || topicParts.length >= 6) {
     await processTelemetry(topic, message, { enterprise, site, area, workCenter, workUnit, attribute });
   } else if (attribute.includes('/alarm')) {
     await processAlarm(topic, message, { enterprise, site, area, workCenter, workUnit });

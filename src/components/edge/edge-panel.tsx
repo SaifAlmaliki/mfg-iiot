@@ -55,6 +55,7 @@ import {
   Search,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useRealtimeStore } from '@/hooks/use-realtime';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { SimulatorDiscoveryDialog } from './simulator-discovery-dialog';
 import { MappingReviewTable } from './mapping-review-table';
@@ -120,6 +121,7 @@ interface TagMapping {
     mqttTopic: string;
     dataType: string;
     engUnit: string | null;
+    tagValues?: { value: string; quality: string; timestamp: string }[];
   };
 }
 
@@ -181,6 +183,7 @@ export function EdgePanel() {
   // Tag Mappings state
   const [mappings, setMappings] = useState<TagMapping[]>([]);
   const [mappingsLoading, setMappingsLoading] = useState(true);
+  const liveTags = useRealtimeStore((s) => s.tags);
   const [mappingDialogOpen, setMappingDialogOpen] = useState(false);
   const [mappingFormMode, setMappingFormMode] = useState<'create' | 'edit'>('create');
   const [selectedMapping, setSelectedMapping] = useState<TagMapping | null>(null);
@@ -636,61 +639,24 @@ export function EdgePanel() {
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Connectors</p>
-                <p className="text-2xl font-bold">{connectors.length}</p>
-              </div>
-              <HardDrive className="w-8 h-8 text-muted-foreground" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Online</p>
-                <p className="text-2xl font-bold text-green-500">
-                  {connectors.filter(c => c.status === 'ONLINE').length}
-                </p>
-              </div>
-              <Wifi className="w-8 h-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Tag Mappings</p>
-                <p className="text-2xl font-bold">
-                  {connectors.reduce((sum, c) => sum + (c._count?.tagMappings || 0), 0)}
-                </p>
-              </div>
-              <ArrowRightLeft className="w-8 h-8 text-muted-foreground" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Errors</p>
-                <p className="text-2xl font-bold text-red-500">
-                  {connectors.filter(c => c.status === 'ERROR').length}
-                </p>
-              </div>
-              <AlertTriangle className="w-8 h-8 text-red-500" />
-            </div>
-          </CardContent>
-        </Card>
+      {/* KPI bar */}
+      <div className="flex flex-wrap items-center gap-x-8 gap-y-2 py-2 border-b border-border/60 text-sm">
+        <span className="flex items-center gap-2 text-muted-foreground">
+          <HardDrive className="w-3.5 h-3.5 shrink-0" />
+          Total <strong className="font-semibold text-foreground tabular-nums">{connectors.length}</strong>
+        </span>
+        <span className="flex items-center gap-2 text-muted-foreground">
+          <Wifi className="w-3.5 h-3.5 shrink-0 text-green-500" />
+          Online <strong className="font-semibold text-green-600 tabular-nums">{connectors.filter(c => c.status === 'ONLINE').length}</strong>
+        </span>
+        <span className="flex items-center gap-2 text-muted-foreground">
+          <ArrowRightLeft className="w-3.5 h-3.5 shrink-0" />
+          Mappings <strong className="font-semibold text-foreground tabular-nums">{connectors.reduce((sum, c) => sum + (c._count?.tagMappings || 0), 0)}</strong>
+        </span>
+        <span className="flex items-center gap-2 text-muted-foreground">
+          <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-red-500" />
+          Errors <strong className="font-semibold text-red-600 tabular-nums">{connectors.filter(c => c.status === 'ERROR').length}</strong>
+        </span>
       </div>
 
       {/* Main Content */}
@@ -847,9 +813,7 @@ export function EdgePanel() {
                       <TableHead>Source Address</TableHead>
                       <TableHead>Source Type</TableHead>
                       <TableHead>Tag</TableHead>
-                      <TableHead>Scale</TableHead>
-                      <TableHead>Offset</TableHead>
-                      <TableHead>Swap Bytes</TableHead>
+                      <TableHead>Value</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
@@ -869,14 +833,14 @@ export function EdgePanel() {
                           <Badge variant="outline">{mapping.sourceType.replace('_', ' ')}</Badge>
                         </TableCell>
                         <TableCell className="font-medium">{mapping.tag.name}</TableCell>
-                        <TableCell>{mapping.scale ?? '-'}</TableCell>
-                        <TableCell>{mapping.offset ?? '-'}</TableCell>
-                        <TableCell>
-                          {mapping.swapBytes ? (
-                            <CheckCircle className="w-4 h-4 text-green-500" />
-                          ) : (
-                            <XCircle className="w-4 h-4 text-slate-300" />
-                          )}
+                        <TableCell className="font-mono text-sm tabular-nums">
+                          {(() => {
+                            const live = liveTags.get(mapping.tag.id);
+                            const fromApi = mapping.tag.tagValues?.[0]?.value;
+                            if (live !== undefined) return String(live.value);
+                            if (fromApi != null && fromApi !== '') return fromApi;
+                            return '—';
+                          })()}
                         </TableCell>
                         <TableCell>
                           <Badge variant={mapping.isActive ? 'default' : 'secondary'}>

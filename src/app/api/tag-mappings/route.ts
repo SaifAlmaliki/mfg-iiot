@@ -31,7 +31,12 @@ export async function GET(request: NextRequest) {
             name: true,
             mqttTopic: true,
             dataType: true,
-            engUnit: true
+            engUnit: true,
+            tagValues: {
+              orderBy: { timestamp: 'desc' },
+              take: 1,
+              select: { value: true, quality: true, timestamp: true }
+            }
           }
         }
       },
@@ -137,7 +142,12 @@ export async function POST(request: NextRequest) {
             name: true,
             mqttTopic: true,
             dataType: true,
-            engUnit: true
+            engUnit: true,
+            tagValues: {
+              orderBy: { timestamp: 'desc' },
+              take: 1,
+              select: { value: true, quality: true, timestamp: true }
+            }
           }
         }
       }
